@@ -3,6 +3,7 @@ import pygp.error as error
 import pygp.gp.gp_functions as gp
 import pygp.gp.gp_utils as gp_utils
 import pygp.connection.connection as conn
+import pygp.loadfile as loadfile
 
 from pygp.crypto import *
 from pygp.constants import *
@@ -897,6 +898,20 @@ def delete(aid):
         logger.log_error(str(e))
         raise
 
+def delete_package(aid):
+    try:
+        global context    
+        global cardInfo
+        global securityInfo       
+
+        error_status = gp.delete_package(context, cardInfo, securityInfo, aid)
+
+        __handle_error_status__(error_status)
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
 def send(apdu):
     try:
         global context       
@@ -908,6 +923,33 @@ def send(apdu):
         error_status =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
 
         __handle_error_status__(error_status)
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+
+def upload(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
+    try:
+        global context    
+        global cardInfo    
+        global securityInfo    
+
+        # Verify the load File
+        load_file_obj = loadfile.Loadfile(load_file_path)
+
+        error_status = gp.install_load(context, cardInfo, securityInfo, load_file_obj.get_aid(), security_domain_aid)
+
+        __handle_error_status__(error_status)
+
+        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 32)
+
+        __handle_error_status__(error_status)
+
+        error_status = gp.install_install(context, cardInfo, securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
+
+
 
     except BaseException as e:
         logger.log_error(str(e))

@@ -4,6 +4,7 @@ from pygp.connection.connection import *
 from pygp.error import *
 from pygp.constants import *
 from pygp.gp.gp_crypto import *
+import pygp.loadfile as loadfile
 from pygp.tlv import *
 
 
@@ -308,6 +309,7 @@ def unwrap_command(security_info,rapdu):
         # only status word so no RMAC
         if len(bytelist_rapdu) == 2:
             return error_status, rapdu
+        #TODO
        
 
     else:
@@ -422,7 +424,22 @@ def delete_application(card_context, card_info, securityInfo,  str_AID):
    
     return error_status
 
+def delete_package(card_context, card_info, securityInfo,  str_AID):
+    
 
+    log_start("delete_package")
+
+    capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
+    
+    #TODO: check context ?
+
+    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("delete_package", error_status['errorStatus'])
+        return error_status
+   
+    return error_status
 
 def get_cplc_data(card_context, card_info, security_info):
     
@@ -941,7 +958,7 @@ def external_authenticate(card_context, card_info, security_info, security_level
     log_end("external_authenticate", error_status['errorStatus'])
     return error_status
 
-def install_install(card_context, card_info, security_info, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges, application_specific_parameters, install_parameters, install_token):
+def install_install(card_context, card_info, security_info, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
     log_start("install_install_and_make_selectable")
     
     error_status = __check_security_info__(security_info)
@@ -951,22 +968,31 @@ def install_install(card_context, card_info, security_info, make_selectable, exe
     
     # build the APDU
     # mandatory fields
-    install_apdu = lv(remove_space(executable_LoadFile_AID)) +  lv(remove_space(executable_Module_AID)) +  lv(remove_space(application_AID)) + lv(application_privileges)
+    install_apdu_data = lv(remove_space(executable_LoadFile_AID)) +  lv(remove_space(executable_Module_AID)) +  lv(remove_space(application_AID)) + lv(application_privileges)
     # optionnal fields
+    parameter_field = ''
     if application_specific_parameters != None:
-        install_apdu = install_apdu + lv('C9' + lv(remove_space(application_specific_parameters)))
+        parameter_field = parameter_field + 'C9' + lv(remove_space(application_specific_parameters))
+    else:
+        parameter_field =parameter_field + 'C903000000'
     
     if install_parameters != None:
-        install_apdu = install_apdu + lv('EF' + lv(remove_space(install_parameters)))  
-    if install_token != None:
-        install_apdu = install_apdu + lv(install_token)
+        parameter_field = parameter_field + 'EF' + lv(remove_space(install_parameters))
     else:
-        install_apdu = install_apdu + '00' #no token
+        parameter_field =parameter_field + 'EF00'
+
+    if install_token != None:
+        install_token = lv(install_token)
+    else:
+        install_token =  '00' #no token
+
 
     if make_selectable == True:
-        install_apdu = '80 E6 0C 00'  + lv(install_apdu) 
+        install_apdu = '80 E6 0C 00'  + lv(install_apdu_data  + lv(parameter_field) + install_token)
     else:
-        install_apdu = '80 E6 04 00'  + lv(install_apdu) 
+        install_apdu = '80 E6 04 00'  + lv(install_apdu_data + lv(parameter_field) + install_token)
+    
+
     
     #TODO: check context ?
     error_status, rapdu = send_APDU(card_context, card_info, security_info,  install_apdu)
@@ -998,9 +1024,12 @@ def install_load(card_context, card_info, security_info, executable_load_file_ai
         install_apdu = install_apdu + '00'
     
     if load_parameters != None:
-        install_apdu = install_apdu + lv('EF' + lv(remove_space(load_parameters)))  
-    if install_token != None:
-        install_apdu = install_apdu + lv(install_token)
+        install_apdu = install_apdu + lv('EF' + lv(remove_space(load_parameters)))
+    else:
+        install_apdu = install_apdu + '00' #no parameter
+
+    if load_token != None:
+        install_apdu = install_apdu + lv(load_token)
     else:
         install_apdu = install_apdu + '00' #no token
 
@@ -1016,6 +1045,43 @@ def install_load(card_context, card_info, security_info, executable_load_file_ai
         
     log_end("install_load", error_status['errorStatus'])
     return error_status
+
+def load_blocks(card_context, card_info, security_info, load_file_path, block_size = 32):
+    log_start("load_blocks")
+    
+    error_status = __check_security_info__(security_info)
+    if error_status['errorStatus'] != 0x00:
+        log_end("load_blocks", error_status['errorStatus'])
+        return error_status
+    
+    block_number = 0x00
+
+    load_file_obj = loadfile.Loadfile(load_file_path)
+
+    all_blocks_data = load_file_obj.get_load_blocks(block_size)
+
+    for block in all_blocks_data:  
+        blockNumber = intToHexString(block_number)
+        is_last_block = (block == all_blocks_data[-1])
+
+        if is_last_block == True:
+            load_apdu = '80' + 'E8' + '80' + blockNumber + lv(block)
+        else:
+            load_apdu = '80' + 'E8' + '00'+ blockNumber + lv(block)
+
+        #TODO: check context ?
+        error_status, rapdu = send_APDU(card_context, card_info, security_info,  load_apdu)
+
+        if error_status['errorStatus'] != 0x00:
+            log_end("extradite", error_status['errorStatus'])
+            return error_status
+        
+        block_number = block_number + 1
+    
+    log_end("load_blocks", error_status['errorStatus'])
+    return error_status
+
+
 
 
 
