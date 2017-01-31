@@ -12,6 +12,56 @@ The following constants valurs could be used with the :func:`set_status()` funct
 
 **CARD_ELEMENT_SD_AND_APPLICATIONS ('60')** to indicate Application or Supplementary Security Domain.
 
+
+.. _privileges:
+		
+Security Domain privileges
+--------------------------
+		
+			+----------+---------------------------------+
+			| Value    |  Description                    |
+			+==========+=================================+
+			| "CSA"    |  Contactless Self Activation    |
+			+----------+---------------------------------+
+			| "CA"     |  Contactless Activation         |
+			+----------+---------------------------------+
+			| "CLFDB"  |  Ciphered Load File Block       |
+			+----------+---------------------------------+
+			| "RG"     |  Receipt Generation             |
+			+----------+---------------------------------+
+			| "GS"     |  Global Service                 |
+			+----------+---------------------------------+
+			| "FA"     |  Final Application              |
+			+----------+---------------------------------+
+			| "GR"     |  Global Registry                |
+			+----------+---------------------------------+
+			| "GL"     |  Global Lock                    |
+			+----------+---------------------------------+
+			| "GD"     |  Global Delete                  |
+			+----------+---------------------------------+
+			| "TM"     | Token Management                |
+			+----------+---------------------------------+
+			| "AM"     | Authorized Management           |
+			+----------+---------------------------------+
+			| "TP"     | Trusted Path                    |
+			+----------+---------------------------------+
+			| "MDAPV"  | Mandated DAP Verification       |
+			+----------+---------------------------------+
+			| "CVMM"   | CVM management                  |
+			+----------+---------------------------------+
+			| "CR"     | Card Reset                      |
+			+----------+---------------------------------+
+			| "CT"     | Card Terminated                 |
+			+----------+---------------------------------+
+			| "CL"     | Card Lock                       |
+			+----------+---------------------------------+
+			| "DM"     | Delegated Management            |
+			+----------+---------------------------------+
+			| "DAPV"   | DAP Verification                |
+			+----------+---------------------------------+
+			| "SD"     | Security Domain                 |
+			+----------+---------------------------------+
+
 '''
 ISD_PACKAGE_AID = "A0000001515350"
 ISD_MODULE_AID  = "A000000151535041"
@@ -261,3 +311,28 @@ Application_LifeCycleState= ({'03':"INSTALLED",\
                       '80':"LOCKED"})
 
 ExecutableLoadFile_LifeCycleState = ({'01':"LOADED"})
+
+
+# The AID dictionary allows to define a package name regarding its AID
+aid_dict = {
+"A0000000030000":   "visa.openplatform",
+"A00000015100":     "org.globalplatform",
+"A0000000620001":   "java.lang",
+"A0000000620002":   "java.io",
+"A0000000620003":   "java.rmi",
+"A0000000620101":   "javacard.framework",
+"A000000062010101": "javacard.framework.service",
+"A0000000620102":   "javacard.security",
+"A0000000620201":   "javacardx.crypto",
+"A000000227011000": "koreanpackage.crypto",
+"A00000000310":     "VSDC",
+"A0000000036010":   "VisaCash",
+"A000000063":       "PKCS15",
+"315041592E":       "PSE",
+"A0000000046010":   "CashCard",
+"A0000000035350":   "Security Domain",
+"A000000167413000": "nJCOP System",
+"A000000167413001": "FIPS 140-2",
+"A0000001320001":   "org.javacardforum.javacard.biometry"
+
+}
