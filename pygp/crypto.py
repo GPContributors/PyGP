@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives import cmac
+from cryptography.hazmat.primitives import hashes
 
 
 
@@ -233,3 +234,54 @@ def MAC(data, key, iv="0000000000000000"):
     ''' redirect to the selected crypto lib'''
     value = DES_CBC(data, key, iv)
     return value[-16:]
+
+def SHA1(data):
+    ''' return the SHA-1 algorithm on data '''
+    # remove space if any
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.SHA1(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
+
+def SHA224(data):
+    ''' return the SHA 224 algorithm on data '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.SHA224(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
+
+def SHA256(data):
+    ''' return the SHA 256 algorithm on data '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
+
+def SHA384(data):
+    ''' return the SHA 384 algorithm on data '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.SHA384(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
+
+def SHA512(data):
+    ''' return the SHA 512 algorithm on data '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
