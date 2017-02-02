@@ -180,7 +180,7 @@ def check_ISO7816_status_word(response):
 
     byte_list_data = toByteArray(response)
     statusWord = toHexString(byte_list_data[-2:])
-    if (statusWord != '9000'):
+    if (statusWord != '9000' and statusWord != '6310'):
         # create error with the status word
         return create_error_status(statusWord, ISO_SW_Dict[statusWord])
     else:

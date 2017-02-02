@@ -600,7 +600,7 @@ def get_status_isd():
 
         if app_info_list != None:
             for app_info in app_info_list:
-                logger.log_info("Card Manager AID : %s (%s) (%s)" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
+                logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
 
         
 
