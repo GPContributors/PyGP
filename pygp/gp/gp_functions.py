@@ -112,7 +112,7 @@ def wrap_command(security_info, capdu):
             security_info['secureChannelProtocolImpl'] == SCP02_IMPL_i45 or
             security_info['secureChannelProtocolImpl'] == SCP02_IMPL_i54 or
             security_info['secureChannelProtocolImpl'] == SCP02_IMPL_i44 or
-            security_info['secureChannelProtocolImpl'] == SCP03_IMPL_i00):
+            security_info['secureChannelProtocol'] == GP_SCP03):
                 
 
                 ############## ISO Case 1 & 2 ##############
@@ -250,7 +250,7 @@ def wrap_command(security_info, capdu):
         wrappedAPDU = toHexString( apdu_to_wrap[:5]) + toHexString(encData) + mac
     
 
-    elif(security_info['secureChannelProtocol']== GP_SCP03):
+    elif(security_info['secureChannelProtocol'] == GP_SCP03):
         wrappedAPDU = toHexString( apdu_to_wrap[:5]) + toHexString(encData) + mac[:16]
         # don't forget tp update the counter for ICV_NULL_8
         security_info['icv_counter'] = security_info['icv_counter'] + 1
@@ -273,7 +273,7 @@ def wrap_command(security_info, capdu):
     return error_status, wrappedAPDU
 
 
-def unwrap_command(security_info,rapdu):
+def unwrap_command(security_info, rapdu):
     ''' unwrap APDU response according to the security info '''
     #TODO: update doc
    
@@ -293,6 +293,7 @@ def unwrap_command(security_info,rapdu):
         security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC) :
             
             error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
+            log_debug("unwrap_command: trivial case, just return")
             log_end("unwrap_command")
             return error_status, rapdu
     
@@ -305,7 +306,7 @@ def unwrap_command(security_info,rapdu):
         #TODO
     
 
-    elif(security_info['secureChannelProtocol']== GP_SCP03):
+    elif(security_info['secureChannelProtocol'] == GP_SCP03):
         # only status word so no RMAC
         if len(bytelist_rapdu) == 2:
             return error_status, rapdu
@@ -686,7 +687,7 @@ def get_status(card_context, card_info, security_info, card_element):
                     app_privileges = app_info.getValue()
                 if app_info.getTAG() == '84':
                     app_modules_aid = app_info.getValue()
-            app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle, 'privileges':app_privileges, 'module_aid':app_modules_aid})
+            app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
         
 
 
@@ -725,9 +726,9 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
 
     # managing authentication data
     bytearray_initUpdateResponse = toByteArray(last_apdu_response)
-    # check init_update_response length, it must be 28, 29 or 31 bytes
+    # check init_update_response length, it must be 28, 29 or 32 bytes
     # SCP01/SCP02 = 30 bytes, SCP03 31 or 34 bytes
-    if len (bytearray_initUpdateResponse) != 28 and len (bytearray_initUpdateResponse) != 29 and len (bytearray_initUpdateResponse) != 31:
+    if len (bytearray_initUpdateResponse) != 28 and len (bytearray_initUpdateResponse) != 29 and len (bytearray_initUpdateResponse) != 32:
         error_status = create_error_status(ERROR_INVALID_RESPONSE_DATA, runtimeErrorDict[ERROR_INVALID_RESPONSE_DATA])
         return error_status, None, None
     

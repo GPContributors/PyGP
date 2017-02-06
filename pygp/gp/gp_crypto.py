@@ -11,7 +11,7 @@ def __SCP03_KDF_CounterMode__( data, key, counter):
     # perform a loop of aes with derivation data
     result = ''
     for i in range(int(counter)):
-        tempResult = crypto.AES_CMAC(toHexString(bytearray_data),key )
+        tempResult = crypto.AES_CMAC(toHexString(bytearray_data), key)
         result  = result + tempResult
         #update index with 1
         bytearray_data[15] = bytearray_data[15] + 1
@@ -26,11 +26,10 @@ def __SCP03_KDF_CounterMode__( data, key, counter):
         return result[:32]
     if keyFormat_Low == 0xC0 and keyFormat_High == 0x00:
         return result[:48]
-    if keyFormat_Low == 0x00 and keyFormat_High == 0x10:
+    if keyFormat_Low == 0x00 and keyFormat_High == 0x01:
         return result[:64]
     else:
         return None
-
 
     return result
 
