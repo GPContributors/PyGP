@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives import hashes
-
+from cryptography.hazmat.primitives.asymmetric import dsa
 
 
 # 8 bytes long NULL ICV
@@ -285,3 +285,19 @@ def SHA512(data):
     digest.update(data_bytes)
     dg = digest.finalize()
     return dg.hex().upper()
+
+def MD5(data):
+    ''' return the MD5 algorithm on data '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    digest = hashes.Hash(hashes.MD5(), backend=default_backend())
+    digest.update(data_bytes)
+    dg = digest.finalize()
+    return dg.hex().upper()
+
+def generate_DSA_keys(key_size = 1024 ):
+    
+    private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
+    return private_key, private_key.public_key()
+

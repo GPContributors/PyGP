@@ -8,6 +8,9 @@ import pygp.loadfile as loadfile
 from pygp.crypto import *
 from pygp.constants import *
 
+# API version
+__version__  = "1.0.0"
+
 # all logging mode
 NONE            = 0x00
 CONSOLE_TRACE   = 0x01
@@ -19,6 +22,7 @@ APDU_MNGT       = 0x40
 APDU            = 0x20
 
 # Global variables 
+current_protocol = conn.SCARD_PROTOCOL_Tx
 context      = None
 cardinfo     = None
 readername   = None
@@ -36,6 +40,13 @@ def __handle_error_status__(error_status):
     if error_status['errorStatus'] == error.ERROR_STATUS_CRITICAL:
         #log the error or raise exception with the message ?
         raise BaseException(error_status['errorMessage'])
+
+
+def get_version():
+    """
+    Returns the PyGP APi current version 
+    """
+    return __version__
 
 def last_response():
     """
@@ -160,6 +171,8 @@ def set_key(*args):
 
     :param str args: key defined using a specific format: "KEY_VERSION_NUMBER/KET_ID/KEY_TYPE/KEY_VALUE"
     
+    .. note:: KEY_TYPE value could be: **DES-ECB**, **DES-CBC**, **AES**, **RSA-PRIV**, **RSA-PUB**
+
     .. note:: If a key defined by its key version number is already present into the off card key repository, the new value will replace the old one.
 
     """
@@ -179,7 +192,7 @@ def set_key(*args):
         else:
             # ckeck if the version number is not already present...in this case we must replace the keys 
             key_def = arg.split("/")
-            found_key_list = getKeyInRepository(key_def[0],key_def[1] )
+            found_key_list = get_key_in_repository(key_def[0],key_def[1] )
             if len(found_key_list) == 0:
                 # just add the key
                 key_list.append(tuple (arg.split("/")))
@@ -192,9 +205,9 @@ def set_key(*args):
 
 
 
-def getKeyInRepository(key_version_number, key_identifier = None):
+def get_key_in_repository(key_version_number, key_identifier = None):
     """
-        Returns the list of Tuple (key value/ Key type) stored into the off card key repository regarding their key version number and eventually their key identifier.
+        Returns the list of Tuple (key value/Key type) stored into the off card key repository regarding their key version number and eventually their key identifier.
 
         :param str keysetversion: the key set version.
         :param str keytype: the key type.
@@ -238,9 +251,20 @@ def terminal(readerName = None):
         Open the terminal using its name. If no terminal name is entered, we use the first reader found in the registry
 
         :param str readerName: the name of the terminal to open.
+
+
+        :returns: a dict mapping error codes with error status ERROR_STATUS_SUCCESS if no error occurs, error code and error message otherwise.
+        
+        ::
+
+            # error_status dict
+            {   error_status['errorStatus']  = ERROR_STATUS_FAILURE
+                error_status['errorCode']    = 0x80301000
+                error_status['errorMessage'] = "A APDU command can't be recognized as a valid T=0 protocol Case 1-4 ISO7816-4 APDU"
+            }
+        
         :raises ValueError: if illegal parameter combination is supplied.
 
-	    :returns: dict:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the :dict:`ErrorStatus`.
 
     """
     try:
@@ -281,10 +305,17 @@ def terminal(readerName = None):
 
 def close():
     '''
-    Close the current selected terminal.
+        Close the current selected terminal.
    
-	:returns: dict:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the :dict:`ErrorStatus`.
+        :returns: a dict mapping error codes with error status ERROR_STATUS_SUCCESS if no error occurs, error code and error message otherwise.
+    
+        ::
 
+            # error_status dict
+            {   error_status['errorStatus']  = ERROR_STATUS_FAILURE
+                error_status['errorCode']    = 0x80301000
+                error_status['errorMessage'] = "A APDU command can't be recognized as a valid T=0 protocol Case 1-4 ISO7816-4 APDU"
+            }
     '''
     try:
         global context
@@ -299,10 +330,35 @@ def close():
         logger.log_error(str(e))
         raise
 
+def change_protocol(protocol):
+    '''
+        Set the protocol to select during the next card reset
+
+        :param str protocol: The protocol to select. 
+        The value could be **'T0'** (T=0), **'T1'** (T=1), **'RAW'** (Raw mode) or **'Tx'** (T=1 or T=0))
+    '''
+    global current_protocol
+    if protocol != 'T0' and protocol != 'T1' and protocol != 'RAW' and protocol != 'Tx':
+        raise BaseException(" %s argument is invalid." % protocol)
+    else:
+        if protocol ==  'T0':
+            current_protocol = conn.SCARD_PROTOCOL_T0
+        elif protocol ==  'T1':
+            current_protocol = conn.SCARD_PROTOCOL_T1
+        elif protocol ==  'RAW':
+            current_protocol = conn.SCARD_PROTOCOL_RAW
+        elif protocol ==  'Tx':
+            current_protocol = conn.SCARD_PROTOCOL_Tx
+        else:
+            raise BaseException(" %s argument is invalid." % protocol)
+
+
+   
+
 
 def card():
     """
-        Reset inserted card, get ATR ans select the Issuer Security Domain
+        Reset inserted card, get ATR and select the Issuer Security Domain
 
         :returns:  str  the card ATR
 
@@ -313,9 +369,10 @@ def card():
         global context 
         global cardInfo   
         global readername
+        global current_protocol
 
         # then perform a card connect
-        error_status,cardInfo = conn.card_connect(context, str(readername), conn.SCARD_PROTOCOL_Tx)
+        error_status,cardInfo = conn.card_connect(context, str(readername), current_protocol)
 
         __handle_error_status__(error_status)
         
@@ -361,8 +418,7 @@ def atr():
 
 def select_isd():
     """
-    Select the Issuer Security Domain.
-    
+    Select the Issuer Security Domain using the select by default APDU command.
     """
     try:
         global context    
@@ -494,6 +550,9 @@ def get_data(identifier):
 
 
 def get_key_information():
+    '''
+        Get key information for the currently selected Application and log it through the logger
+    '''
     try:
         global context    
         global cardInfo    
@@ -529,6 +588,9 @@ def get_key_information():
 
 
 def get_cplc():
+    '''
+        Get Card Production life cycle data and log it through the logger.
+    '''
     try:
         global context    # Needed to modify global copy of context    
         global cardInfo    # Needed to modify global copy of context
@@ -751,7 +813,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
     
         if enc_key == None:
             # get the key from the repository
-            found_key_list = getKeyInRepository(ketsetversion, "1")
+            found_key_list = get_key_in_repository(ketsetversion, "1")
             if len(found_key_list) > 0:
                 (enc_key_vn, enc_key_id, enc_key_type, enc_key,) = found_key_list[0]
             else:
@@ -759,7 +821,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         
         if mac_key == None:
             # get the key from the repository
-            found_key_list = getKeyInRepository(ketsetversion, "2" )
+            found_key_list = get_key_in_repository(ketsetversion, "2" )
             if len(found_key_list) > 0:
                 (mac_key_vn, mac_key_id, mac_key_type, mac_key) = found_key_list[0]
             else:
@@ -767,7 +829,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         
         if dek_key == None:
             # get the key from the repository
-            found_key_list = getKeyInRepository(ketsetversion, "3")
+            found_key_list = get_key_in_repository(ketsetversion, "3")
             if len(found_key_list) > 0:
                 (dek_key_vn, dek_key_id, dek_key_type, dek_key) = found_key_list[0]
             else:
@@ -800,7 +862,6 @@ def extradite(security_domain_AID, application_aid, identification_number = None
         global key_list    
         global securityInfo
 
-        # perform the put_key command 
         error_status =  gp.extradite(context, cardInfo, securityInfo, security_domain_AID, application_aid, identification_number,  image_Number, application_provider_identifier, token_identifier, extraditeToken )
 
         __handle_error_status__(error_status)
@@ -831,6 +892,17 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
 
 
 def put_key(key_version_number, key_identifier = None, replace = False):
+    '''
+        Add or replace a key identifies by its version number and eventually its key identifier.
+
+        :param str key_version_number: The key version number.
+        :param str key_identifier: The key idetifier.
+        :param bool replace: True if the key must be replaced, False otherwize.
+
+
+        .. note:: The key must be present in the the off card key repository before set it into the card. see :func:`set_key()`  
+
+    '''
     try:
         global context       
         global cardInfo   
@@ -839,7 +911,7 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         global securityInfo
 
         # 1. get the key from the off card key repository
-        key_list = getKeyInRepository(key_version_number, key_identifier)
+        key_list = get_key_in_repository(key_version_number, key_identifier)
         ( key_vn, key_id, key_type, key_value ) = key_list[0] 
         # 2. perform the put_key command 
         error_status =  gp.put_key(context, cardInfo, securityInfo, key_version_number,key_identifier, key_type, key_value, replace )
@@ -858,7 +930,7 @@ def put_scp_key(key_version_number, replace = False):
         global securityInfo
 
         # 1. get the keys from the off card key repository
-        found_key_list = getKeyInRepository(key_version_number)
+        found_key_list = get_key_in_repository(key_version_number)
         # 2. perform the put_key command with the key_list 
         error_status =  gp.put_scp_key(context, cardInfo, securityInfo, key_version_number, found_key_list, replace )
 
@@ -930,7 +1002,7 @@ def send(apdu):
 
 
 
-def upload(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
+def upload_install(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
     try:
         global context    
         global cardInfo    
