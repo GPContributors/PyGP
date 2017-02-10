@@ -293,7 +293,6 @@ def unwrap_command(security_info, rapdu):
         security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC) :
             
             error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
-            log_debug("unwrap_command: trivial case, just return")
             log_end("unwrap_command")
             return error_status, rapdu
     
@@ -1058,6 +1057,8 @@ def load_blocks(card_context, card_info, security_info, load_file_path, block_si
     block_number = 0x00
 
     load_file_obj = loadfile.Loadfile(load_file_path)
+
+    log_debug("load_blocks: load_file_obj: %s" %load_file_obj.__str__())
 
     all_blocks_data = load_file_obj.get_load_blocks(block_size)
 

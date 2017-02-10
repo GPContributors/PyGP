@@ -943,7 +943,7 @@ def upload(load_file_path, security_domain_aid, executable_module_aid, applicati
 
         __handle_error_status__(error_status)
 
-        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 32)
+        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 192)
 
         __handle_error_status__(error_status)
 
