@@ -135,6 +135,7 @@ ERROR_SESSION_KEY_CREATION                  = '80301007' #!< Error during sessio
 ERROR_NO_CARD_CONTEXT_INITIALIZED           = '80301008' #!< A card context must be established first.
 ERROR_NO_CARD_INFO_INITIALIZED              = '80301009' #!< A card connection must be established first.
 ERROR_NO_SECURITY_INFO_INITIALIZED          = '8030100A' #!< A mutual authentication must be established first.
+ERROR_VALIDATION_R_MAC                      = '8030100B' #!< The validation of the R-MAC has failed.
 INVALID_LOGICAL_CHANNEL_NUMBER      = '80001000' #!< Invalid logical channel number.
 
 
@@ -150,6 +151,7 @@ runtimeErrorDict = {
     ERROR_NO_CARD_CONTEXT_INITIALIZED: "A card context must be established first.",
     ERROR_NO_CARD_INFO_INITIALIZED: "A card connection must be created first.",
     ERROR_NO_SECURITY_INFO_INITIALIZED: "A mutual authentication must be established first.",
+    ERROR_VALIDATION_R_MAC: "The validation of the R-MAC has failed.",
 
     INVALID_LOGICAL_CHANNEL_NUMBER: "Invalid logical channel number"
 }

@@ -63,6 +63,11 @@ def wrap_command(security_info, capdu):
         error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
         return error_status, capdu
 
+    # security_info level defined
+    if ('securityLevel' in security_info) == False:
+        error_status = create_error_status(ERROR_NO_SECURITY_INFO_INITIALIZED, runtimeErrorDict[ERROR_NO_SECURITY_INFO_INITIALIZED])
+        return error_status, ''
+
     # trivial case, just return
     if security_info['securityLevel'] == SECURITY_LEVEL_NO_SECURE_MESSAGING:
         error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
@@ -201,7 +206,8 @@ def wrap_command(security_info, capdu):
     # if we have to encrypt:
     if  (security_info['securityLevel'] == SECURITY_LEVEL_C_DEC_C_MAC or
         security_info['securityLevel'] == SECURITY_LEVEL_C_DEC_C_MAC or
-        security_info['securityLevel'] == SECURITY_LEVEL_C_DEC_C_MAC_R_MAC):
+        security_info['securityLevel'] == SECURITY_LEVEL_C_DEC_C_MAC_R_MAC or
+        security_info['securityLevel'] == SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC):
         # retrieve only the data field (ie: remove APDU header)
         apdu_data_field = apdu_to_wrap[5:]
 
@@ -253,7 +259,9 @@ def wrap_command(security_info, capdu):
     elif(security_info['secureChannelProtocol'] == GP_SCP03):
         wrappedAPDU = toHexString( apdu_to_wrap[:5]) + toHexString(encData) + mac[:16]
         # don't forget tp update the counter for ICV_NULL_8
+        log_debug("wrap_command: current ICV counter: %s" %intToHexString(security_info['icv_counter'] ,2))
         security_info['icv_counter'] = security_info['icv_counter'] + 1
+        
        
 
     else:
@@ -279,6 +287,7 @@ def unwrap_command(security_info, rapdu):
    
 
     log_start("unwrap_command")
+    error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
 
     # no security level defined, just return
     if (security_info == None):
@@ -287,9 +296,9 @@ def unwrap_command(security_info, rapdu):
         return error_status, rapdu
 
     # trivial case, just return
-    if  (security_info['securityLevel'] != SECURITY_LEVEL_R_MAC or
-        security_info['securityLevel']  != SECURITY_LEVEL_C_MAC_R_MAC or
-        security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_C_MAC_R_MAC or
+    if  (security_info['securityLevel'] != SECURITY_LEVEL_R_MAC and
+        security_info['securityLevel']  != SECURITY_LEVEL_C_MAC_R_MAC and
+        security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_C_MAC_R_MAC and
         security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC) :
             
             error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
@@ -310,7 +319,43 @@ def unwrap_command(security_info, rapdu):
         # only status word so no RMAC
         if len(bytelist_rapdu) == 2:
             return error_status, rapdu
-        #TODO
+        else:
+
+            # get the mac of the command (8 bytes before the rapdu status word)
+            len_reponse_date_without_sw = len(bytelist_rapdu) - 2
+            len_response_data_without_mac = len_reponse_date_without_sw - 8
+            response_data_without_mac = bytelist_rapdu[0:len_response_data_without_mac]
+            response_data_mac = bytelist_rapdu[ len_response_data_without_mac: len_reponse_date_without_sw]
+            response_data_sw = bytelist_rapdu[len_reponse_date_without_sw:]
+            log_debug("unwrap_command: Response MAC: %s" %toHexString(response_data_mac))
+            # calculate the off card MAC
+            mac = calculate_mac_SCP03(toHexString(response_data_without_mac) + toHexString(response_data_sw), security_info['R_MACSessionKey'], security_info['lastC_MAC'])
+            log_debug("unwrap_command: Data for MAC computation: %s" %(toHexString(response_data_without_mac) + toHexString(response_data_sw)))
+            log_debug("unwrap_command: ICV for Generated MAC: %s" %security_info['lastC_MAC'])
+            log_debug("unwrap_command: Generated MAC: %s" %mac)
+            if toHexString(response_data_mac) != mac[:16]: 
+                error_status = create_error_status(ERROR_VALIDATION_R_MAC, runtimeErrorDict[ERROR_VALIDATION_R_MAC])
+                log_end("unwrap_command")
+                return error_status, None
+            else:
+                # check if we have to decipher the APDU
+                if security_info['securityLevel']  == SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC:
+                    if(security_info['secureChannelProtocol']== GP_SCP03):
+                        log_debug("unwrap_command: current ICV counter: %s" %intToHexString(security_info['icv_counter'] - 1,2))
+                        iv = crypto.ISO_9797_M2_Padding_left(intToHexString(security_info['icv_counter']-1 ,2), 16)
+                        iv = encipher_iv_SCP03(iv, security_info['encryptionSessionKey'])
+                        log_debug("unwrap_command: current ICV : %s " %iv)
+
+                        # decipher data
+                        decipher_data = decipher_data_SCP03(toHexString(response_data_without_mac), security_info['encryptionSessionKey'], iv)
+                        decipher_data = crypto.Remove_ISO_9797_M2_Padding(decipher_data)
+                        return error_status, decipher_data + toHexString(response_data_sw)
+                    
+                    pass
+                else:
+                    return error_status, toHexString(bytelist_rapdu)
+
+
        
 
     else:
@@ -325,7 +370,7 @@ def send_APDU(card_context, card_info, securityInfo, capdu):
     global last_apdu_status
     
     log_start("send_APDU")
-    #TODO: check context ? managing security info wrapp the command
+    #TODO: check context ? managing security info wrap the command
 
     # wrap command
     error_status, c_wrapped_apdu = wrap_command(securityInfo, capdu)
@@ -341,6 +386,9 @@ def send_APDU(card_context, card_info, securityInfo, capdu):
     
 
     error_status, c_unwrapped_rapdu = unwrap_command(securityInfo, rapdu)
+    if error_status['errorStatus'] != 0x00:
+        log_end("send_APDU", error_status['errorStatus'])
+        return error_status, None
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
@@ -764,7 +812,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
             scp_implementation = intToHexString(scpi)
         else:
             #test if reported SCP implementation is consistent with passed SCP implementation
-            if scp_implementation != scpi:
+            if scp_implementation != intToHexString(scpi):
                 error_status = create_error_status(ERROR_INVALID_SCP_IMPL, runtimeErrorDict[ERROR_INVALID_SCP_IMPL])
                 return error_status, None, None
             
@@ -859,7 +907,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
         else:
             securityInfo['C_MACSessionKey'] = session_key_value
         #calculation of R-MAC session key
-        session_key_value  = create_session_key_SCP03(dek_key, KRMAC_TYPE, toHexString(cardChallenge), hostChallenge)
+        session_key_value  = create_session_key_SCP03(mac_key, KRMAC_TYPE, toHexString(cardChallenge), hostChallenge)
         if session_key_value == None:
             error_status = create_error_status(ERROR_SESSION_KEY_CREATION, runtimeErrorDict[ERROR_SESSION_KEY_CREATION])
             return error_status, None, None

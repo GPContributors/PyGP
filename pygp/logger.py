@@ -132,3 +132,4 @@ def log_management_apdu(direction, byte_list_apdu):
                 j = 0
 
         logger.info(message)
+
