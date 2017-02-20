@@ -258,6 +258,19 @@ def encipher_data_SCP03(data, key, iv):
     data = crypto.ISO_9797_M2_Padding(data, 8)
     return crypto.AES_CBC(data, key, iv)
 
+def decipher_data_SCP03(data, key, iv):
+    '''
+    decipher message according to SCP03 protocol.
+    
+    :param str data : The message to authenticate.
+    :param str key : A AES key used to encipher 
+    :param str iv : The initial chaining vector
+
+	:returns: (str): The deciphered data
+    '''
+    data = crypto.AES_INV_CBC(data, key, iv)
+    return data
+
 def encipher_iv_SCP02(data, key):
     '''
     encipher initial chaining vector according to SCP02 protocol.
