@@ -248,7 +248,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
 
 def terminal(readerName = None):
     """
-        Open the terminal using its name. If no terminal name is entered, we use the first reader found in the registry
+        Open the terminal using its name. If no terminal name is entered, we use the first 'available' reader found in the registry
 
         :param str readerName: the name of the terminal to open.
 
@@ -270,7 +270,9 @@ def terminal(readerName = None):
     try:
         global context
         global readername     
-        
+        global cardInfo   
+        global current_protocol
+
         # first establish context
         error_status, context = conn.establish_context()
         
@@ -286,13 +288,15 @@ def terminal(readerName = None):
             logger.log_debug('Found readers: ' + str(list_readernames))
         
             if len(list_readernames) > 0:
+                for readers in list_readernames:
+                    # then perform a card connect to verify the card connection
+                    error_status,cardInfo = conn.card_connect(context, str(readers.decode()), current_protocol)
+                    if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
+                        readerName = readers.decode()
         
-                readerName=list_readernames[0].decode()
-        
-                logger.log_debug('Using first reader in the list: %s' %readerName)
+                logger.log_debug('Using first available reader in the list: %s' %readerName)
         
             else:
-        
                 logger.log_error('No reader found')
         
         readername = readerName
@@ -984,6 +988,20 @@ def delete_package(aid):
         logger.log_error(str(e))
         raise
 
+def delete_key(key_version_number, key_identifier):
+    try:
+        global context    
+        global cardInfo
+        global securityInfo       
+
+        error_status = gp.delete_package(context, cardInfo, securityInfo, key_version_number, key_identifier)
+
+        __handle_error_status__(error_status)
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
 def send(apdu):
     try:
         global context       
@@ -1015,7 +1033,7 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
 
         __handle_error_status__(error_status)
 
-        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 32)
+        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 192)
 
         __handle_error_status__(error_status)
 
