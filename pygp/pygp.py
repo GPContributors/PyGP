@@ -248,7 +248,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
 
 def terminal(readerName = None):
     """
-        Open the terminal using its name. If no terminal name is entered, we use the first reader found in the registry
+        Open the terminal using its name. If no terminal name is entered, we use the first 'available' reader found in the registry
 
         :param str readerName: the name of the terminal to open.
 
@@ -270,7 +270,9 @@ def terminal(readerName = None):
     try:
         global context
         global readername     
-        
+        global cardInfo   
+        global current_protocol
+
         # first establish context
         error_status, context = conn.establish_context()
         
@@ -286,13 +288,15 @@ def terminal(readerName = None):
             logger.log_debug('Found readers: ' + str(list_readernames))
         
             if len(list_readernames) > 0:
+                for readers in list_readernames:
+                    # then perform a card connect to verify the card connection
+                    error_status,cardInfo = conn.card_connect(context, str(readers.decode()), current_protocol)
+                    if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
+                        readerName = readers.decode()
         
-                readerName=list_readernames[0].decode()
-        
-                logger.log_debug('Using first reader in the list: %s' %readerName)
+                logger.log_debug('Using first available reader in the list: %s' %readerName)
         
             else:
-        
                 logger.log_error('No reader found')
         
         readername = readerName
