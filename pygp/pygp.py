@@ -984,6 +984,20 @@ def delete_package(aid):
         logger.log_error(str(e))
         raise
 
+def delete_key(key_version_number, key_identifier):
+    try:
+        global context    
+        global cardInfo
+        global securityInfo       
+
+        error_status = gp.delete_package(context, cardInfo, securityInfo, key_version_number, key_identifier)
+
+        __handle_error_status__(error_status)
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
 def send(apdu):
     try:
         global context       

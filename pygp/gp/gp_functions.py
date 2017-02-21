@@ -489,6 +489,23 @@ def delete_package(card_context, card_info, securityInfo,  str_AID):
    
     return error_status
 
+def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionNumber):
+    
+
+    log_start("delete_key")
+
+    capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + + lv('D2' + lv(keyVersionNumber))
+    
+    #TODO: check context ?
+
+    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("delete_package", error_status['errorStatus'])
+        return error_status
+   
+    return error_status
+
 def get_cplc_data(card_context, card_info, security_info):
     
    
