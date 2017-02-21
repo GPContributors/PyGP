@@ -994,7 +994,7 @@ def delete_key(key_version_number, key_identifier):
         global cardInfo
         global securityInfo       
 
-        error_status = gp.delete_package(context, cardInfo, securityInfo, key_version_number, key_identifier)
+        error_status = gp.delete_key(context, cardInfo, securityInfo, key_version_number, key_identifier)
 
         __handle_error_status__(error_status)
 

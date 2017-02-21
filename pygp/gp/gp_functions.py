@@ -501,7 +501,7 @@ def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionN
     error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
-        log_end("delete_package", error_status['errorStatus'])
+        log_end("delete_key", error_status['errorStatus'])
         return error_status
    
     return error_status
