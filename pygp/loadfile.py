@@ -76,11 +76,46 @@ class Loadfile(object):
     def get_raw_code(self):
         ''' Returns the raw code of the load file as string (ie. All components excluding Descriptor and Debug Component)'''
         rawCodeAsString = ''
-        for component_name in self.components:
-            if component_name != 'Descriptor' or  component_name != 'Debug':
-                rawCodeAsString = rawCodeAsString + self.components[component_name]
+        #for component_name in self.components:
+        #    if component_name != 'Descriptor' or  component_name != 'Debug':
+        #        rawCodeAsString = rawCodeAsString + self.components[component_name]
 
-            
+        # Sometimes suncap file does not have correct component order and it will return 6985, 
+        # so generate raw string one by one to prevent it.
+        if "Header" in self.components.keys():
+            rawCodeAsString += self.components["Header"]
+
+        if "Directory" in self.components.keys():
+            rawCodeAsString += self.components["Directory"]
+
+        if "Import" in self.components.keys():
+            rawCodeAsString += self.components["Import"]
+
+        if "Applet" in self.components.keys():
+            rawCodeAsString += self.components["Applet"]
+
+        if "Class" in self.components.keys():
+            rawCodeAsString += self.components["Class"]
+
+        if "Method" in self.components.keys():
+            rawCodeAsString += self.components["Method"]
+
+        if "Staticfield" in self.components.keys():
+            rawCodeAsString += self.components["Staticfield"]
+
+        if "Export" in self.components.keys():
+            rawCodeAsString += self.components["Export"]
+
+        if "ConstantPool" in self.components.keys():
+            rawCodeAsString += self.components["ConstantPool"]
+
+        if "RefLocation" in self.components.keys():
+            rawCodeAsString += self.components["RefLocation"]
+
+        # Add this even optional component
+        if "Descriptor" in self.components.keys():
+            rawCodeAsString += self.components["Descriptor"]
+
         return rawCodeAsString
     
     def get_code_size(self):

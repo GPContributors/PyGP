@@ -302,7 +302,6 @@ def unwrap_command(security_info, rapdu):
         security_info['securityLevel']  != SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC) :
             
             error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
-            log_debug("unwrap_command: trivial case, just return")
             log_end("unwrap_command")
             return error_status, rapdu
     
@@ -486,6 +485,23 @@ def delete_package(card_context, card_info, securityInfo,  str_AID):
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_package", error_status['errorStatus'])
+        return error_status
+   
+    return error_status
+
+def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionNumber):
+    
+
+    log_start("delete_key")
+
+    capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + + lv('D2' + lv(keyVersionNumber))
+    
+    #TODO: check context ?
+
+    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("delete_key", error_status['errorStatus'])
         return error_status
    
     return error_status
@@ -1106,6 +1122,8 @@ def load_blocks(card_context, card_info, security_info, load_file_path, block_si
     block_number = 0x00
 
     load_file_obj = loadfile.Loadfile(load_file_path)
+
+    log_debug("load_blocks: load_file_obj: %s" %load_file_obj.__str__())
 
     all_blocks_data = load_file_obj.get_load_blocks(block_size)
 
