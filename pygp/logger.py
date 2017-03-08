@@ -89,6 +89,7 @@ def log_end(message, *args):
     complete_message = message + ' '
     for arg in args:
         complete_message = complete_message + ' ' + str(arg)
+    complete_message += "\n"
     logger.debug(complete_message)
 
 
@@ -106,8 +107,8 @@ def log_apdu(direction, byte_list_apdu):
         for i in range(0,len(byte_list_apdu)):
             message += ("%-0.2X " % byte_list_apdu[i])
             j = j + 1
-            if j== 16:
-                message+="\n    "
+            if j == 16 and len(byte_list_apdu) > (i+1):
+                message += "\n    "
                 j = 0
 
         logger.info(message)
