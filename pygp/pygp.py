@@ -293,7 +293,10 @@ def terminal(readerName = None):
                     error_status,cardInfo = conn.card_connect(context, str(readers.decode()), current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
-        
+
+#                if readerName == None:
+#                    raise BaseException("Failed to connect, please check the card.")
+
                 logger.log_debug('Using first available reader in the list: %s' %readerName)
         
             else:
@@ -414,7 +417,7 @@ def atr():
         # return ATR information
         atr = conn.getATR(context,cardInfo)
 
-        return atr
+        print("ATR: " + str(atr))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -749,7 +752,8 @@ def get_status_executable_load_files_and_modules():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -775,10 +779,11 @@ def ls():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if exefile_info_list != None:        
+        if exefile_info_list != None:
             for app_info in exefile_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
         
 
     except BaseException as e:
@@ -1010,7 +1015,7 @@ def send(apdu):
         global key_list    
         global securityInfo    
 
-        error_status =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
+        error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
 
         __handle_error_status__(error_status)
 
