@@ -337,6 +337,13 @@ def close():
         logger.log_error(str(e))
         raise
 
+    # reset global variable to prevent re-use them
+    context      = None
+    cardinfo     = None
+    readername   = None
+    securityInfo = None
+
+
 def change_protocol(protocol):
     '''
         Set the protocol to select during the next card reset
@@ -358,9 +365,6 @@ def change_protocol(protocol):
             current_protocol = conn.SCARD_PROTOCOL_Tx
         else:
             raise BaseException(" %s argument is invalid." % protocol)
-
-
-   
 
 
 def card():
@@ -395,6 +399,7 @@ def card():
         logger.log_error(str(e))
         raise
 
+
 def atr():
     """
         Reset inserted card and get ATR.
@@ -423,6 +428,7 @@ def atr():
         logger.log_error(str(e))
         raise
 
+
 def select_isd():
     """
     Select the Issuer Security Domain using the select by default APDU command.
@@ -440,6 +446,9 @@ def select_isd():
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
+    # reset previously configured security info if new application is selected
+    securityInfo = None
 
 
 def set_sd_state(lifeCycleState, aid):
@@ -862,7 +871,6 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
 
 
 
-
 def extradite(security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
     try:
         global context       
@@ -964,6 +972,9 @@ def select(aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
+    # reset previously configured security info if new application is selected
+    securityInfo = None
 
 def delete(aid):
     try:
