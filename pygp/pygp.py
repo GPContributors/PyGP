@@ -15,13 +15,15 @@ __version__  = "1.0.0"
 NONE            = 0x00
 CONSOLE_TRACE   = 0x01
 FILE_TRACE      = 0x02
-ERROR_LEVEL     = 0x10
-INFO_LEVEL      = 0x08
 DEBUG_LEVEL     = 0x04
-APDU_MNGT       = 0x40
+INFO_LEVEL      = 0x08
+ERROR_LEVEL     = 0x10
 APDU            = 0x20
+APDU_MNGT       = 0x40
+APDU_TIMING     = 0x80
 
 # Global variables 
+must_stop_on_error = False
 current_protocol = conn.SCARD_PROTOCOL_Tx
 context      = None
 cardinfo     = None
@@ -31,14 +33,42 @@ key_list    = []
 timer_start = None
 
 
-def __handle_error_status__(error_status):
+def __handle_error_status__(error_status, function_name = ''):
+    global must_stop_on_error
+    
     if error_status['errorStatus'] == error.ERROR_STATUS_FAILURE:
-        #log the error or raise exception with the message ?
-        logger.log_error(error_status['errorMessage'])
-        #raise BaseException(error_status['errorMessage'])
+        if must_stop_on_error == False:
+            # log the error with the message 
+            logger.log_error("** " + function_name + error_status['errorMessage'] + " **")
+        else:
+            # stop execution by throwing an exception with the message 
+            raise BaseException(error_status['errorMessage'])
+
     if error_status['errorStatus'] == error.ERROR_STATUS_CRITICAL:
-        #log the error or raise exception with the message ?
+        # Always raise exception with the message on critical error
         raise BaseException(error_status['errorMessage'])
+
+
+
+def stop_on_error(value):
+    """
+        Allows to stop the execution if an error occured.
+
+        :param bool value: True if execution should be stopped, False otherwize
+
+    """
+    global must_stop_on_error
+    must_stop_on_error = value
+
+def sleep(milliseconds):
+    """
+        Delay execution for a given amount of time expressed in milliseconds
+
+        :param int milliseconds: a number of milliseconds to delay execution process
+
+    """
+    import time
+    time.sleep (milliseconds / 1000.0)
 
 
 def get_version():
@@ -92,6 +122,7 @@ def set_log_mode(loggingMode, file_path = None):
             
             * APDU          (0x20): APDU exchanges are displayed
             * APDU_MNGT     (0x40): APDU exchanges due to the protocol (formelly T=0 protocol) are displayed
+            * APDU_TIMING   (0x80): APDU exchanges timing are displayed
                     
         :param str file_path: the path of the logging file if the logging mode is set to FILE_TRACE
 
@@ -105,7 +136,7 @@ def set_log_mode(loggingMode, file_path = None):
 
 
     """
-
+    global apdu_timer
     # first we remove all logging handler
     logger.remove_log_handlers()
 
@@ -133,7 +164,13 @@ def set_log_mode(loggingMode, file_path = None):
     
     if (loggingMode & APDU_MNGT) == APDU_MNGT:
         # Display APDU exchanges
-        logger.set_apdu_management_logging(True)   
+        logger.set_apdu_management_logging(True) 
+    
+    if (loggingMode & APDU_TIMING) == APDU_TIMING:
+        # Display APDU timings
+        gp.apdu_timing(True)
+    else:     
+        gp.apdu_timing(False)
 
 
 def echo(message, log_level=INFO_LEVEL):
@@ -436,7 +473,7 @@ def select_isd():
 
         error_status = gp.select_issuerSecurityDomain(context, cardInfo)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "select_isd: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -462,7 +499,7 @@ def set_sd_state(lifeCycleState, aid):
 
         error_status = gp.set_status(context, cardInfo, securityInfo, CARD_ELEMENT_SD_AND_APPLICATIONS, lifeCycleState, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "set_sd_state: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -485,7 +522,7 @@ def set_app_state(lifeCycleState, aid):
 
         error_status = gp.set_status(context, cardInfo, securityInfo, CARD_ELEMENT_APPLICATION_AND_SSD, lifeCycleState, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "set_app_state: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -509,7 +546,7 @@ def set_status(cardElement, lifeCycleState, aid):
 
         error_status = gp.set_status(context, cardInfo, securityInfo, cardElement, lifeCycleState, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "set_status: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -532,7 +569,7 @@ def store_data(data):
         
         error_status = gp.store_data(context, cardInfo, securityInfo, data)
 
-        __handle_error_status__(error_status)  
+        __handle_error_status__(error_status, "store_data: ")  
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -556,7 +593,7 @@ def get_data(identifier):
         
         error_status = gp.get_data(context, cardInfo, securityInfo, identifier)
 
-        __handle_error_status__(error_status)  
+        __handle_error_status__(error_status, "get_data: ")  
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -574,7 +611,7 @@ def get_key_information():
 
         error_status, key_information_templates = gp.get_key_information_template(context, cardInfo, securityInfo)
 
-        __handle_error_status__(error_status)  
+        __handle_error_status__(error_status, "get_key_information: ")  
 
         if key_information_templates != None:
 
@@ -614,7 +651,7 @@ def get_cplc():
         # Get data from card
         error_status, cplc_data = gp.get_cplc_data(context, cardInfo, securityInfo)
         
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_cplc: ")
         
         if cplc_data != None:
             index = 0x00
@@ -673,7 +710,7 @@ def get_status_isd():
         # 1. perform the command 
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '80' )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_status_isd: ")
 
         if app_info_list != None:
             for app_info in app_info_list:
@@ -694,7 +731,7 @@ def get_status_applications():
         # 1. perform the command 
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '40' )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_status_applications: ")
 
         if app_info_list != None:
             for app_info in app_info_list:
@@ -715,7 +752,7 @@ def get_status_executable_load_file():
         # 1. perform the command 
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '20' )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_status_executable_load_file: ")
 
         if app_info_list != None:
             for app_info in app_info_list:
@@ -735,7 +772,7 @@ def get_status_executable_load_files():
         # 1. perform the install command 
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '20' )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_status_executable_load_files: ")
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
@@ -754,7 +791,7 @@ def get_status_executable_load_files_and_modules():
         # 1. perform the install command 
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '10' )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "get_status_executable_load_files_and_modules: ")
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
@@ -774,11 +811,11 @@ def ls():
 
         # 1. perform the command
         error_status, isd_info_list =  gp.get_status(context, cardInfo, securityInfo, '80' )
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "ls: ")
         error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '40' )
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "ls: ")
         error_status, exefile_info_list =  gp.get_status(context, cardInfo, securityInfo, '10' )
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "ls: ")
 
         if isd_info_list != None:
             for app_info in isd_info_list:
@@ -813,7 +850,70 @@ def channel(logical_channel):
 
         error_status = gp.select_channel(context, cardInfo, logical_channel)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "channel: ")
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21'):
+    
+    try:
+        global context       
+        global cardInfo   
+        global readername    
+        global securityInfo   
+    
+        if enc_key == None:
+            # get the key from the repository
+            found_key_list = get_key_in_repository(ketsetversion, "1")
+            if len(found_key_list) > 0:
+                (enc_key_vn, enc_key_id, enc_key_type, enc_key,) = found_key_list[0]
+            else:
+                raise BaseException("Could not find key with key version number %s and key id '1' into the off card key repository" %ketsetversion )
+        
+        if mac_key == None:
+            # get the key from the repository
+            found_key_list = get_key_in_repository(ketsetversion, "2" )
+            if len(found_key_list) > 0:
+                (mac_key_vn, mac_key_id, mac_key_type, mac_key) = found_key_list[0]
+            else:
+                raise BaseException("Could not find key with key version number %s and key id '2' into the off card key repository" %ketsetversion )
+        
+        if dek_key == None:
+            # get the key from the repository
+            found_key_list = get_key_in_repository(ketsetversion, "3")
+            if len(found_key_list) > 0:
+                (dek_key_vn, dek_key_id, dek_key_type, dek_key) = found_key_list[0]
+            else:
+                raise BaseException("Could not find key with key version number %s and key id '3' into the off card key repository" %ketsetversion )
+        
+        # TODO: manage this case ???
+        base_key = None # ???
+
+        # first init update:
+        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi )
+        __handle_error_status__(error_status, "init_update: ")
+        securityInfo = security_Info_template
+
+        return hostCryptogram
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
+    
+    try:
+        global context       
+        global cardInfo   
+        global readername    
+        global securityInfo   
+    
+        if securityInfo != None and hostCryptogram != None:
+            error_status =  gp.external_authenticate(context, cardInfo, securityInfo, securitylevel, hostCryptogram )
+            __handle_error_status__(error_status, "ext_auth: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -856,12 +956,12 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
 
         # first init update:
         error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi )
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "auth: ")
         securityInfo = security_Info_template
 
         if security_Info_template != None and hostCryptogram != None:
             error_status =  gp.external_authenticate(context, cardInfo, securityInfo, securitylevel, hostCryptogram )
-            __handle_error_status__(error_status)
+            __handle_error_status__(error_status, "auth: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -878,14 +978,33 @@ def extradite(security_domain_AID, application_aid, identification_number = None
 
         error_status =  gp.extradite(context, cardInfo, securityInfo, security_domain_AID, application_aid, identification_number,  image_Number, application_provider_identifier, token_identifier, extraditeToken )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "extradite: ")
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
 
-def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges, application_specific_parameters, install_parameters, install_token = None):
+def install_load(load_file_path, security_domain_aid ):
+    try:
+        global context    
+        global cardInfo    
+        global securityInfo    
+
+        # Verify the load File
+        load_file_obj = loadfile.Loadfile(load_file_path)
+
+        error_status = gp.install_load(context, cardInfo, securityInfo, load_file_obj.get_aid(), security_domain_aid)
+
+        __handle_error_status__(error_status, "install_load: ")
+
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+        
+def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
     try:
         global context       
         global cardInfo   
@@ -898,7 +1017,45 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
         # 2. perform the install command 
         error_status =  gp.install_install(context, cardInfo, securityInfo, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, b_string_privilege, application_specific_parameters, install_parameters, install_token )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "install: ")
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def registry_update(security_domain_AID, application_aid, application_privileges = "00",  registry_parameter_field = None, install_token = None):
+    try:
+        global context       
+        global cardInfo   
+        global readername    
+        global key_list    
+        global securityInfo
+
+        # 1. managing privieges
+        b_string_privilege = gp_utils.privilegesToBytes(application_privileges)
+
+        error_status =  gp.registry_update(context, cardInfo, securityInfo, security_domain_AID, application_aid, b_string_privilege,  registry_parameter_field, install_token )
+
+        __handle_error_status__(error_status, "registry_update: ")
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def load_file(load_file_path, block_size = 32 ):
+    try:
+        global context    
+        global cardInfo    
+        global securityInfo    
+
+        # Verify the load File
+        load_file_obj = loadfile.Loadfile(load_file_path)
+
+        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size)
+
+        __handle_error_status__(error_status, "load_file: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -930,7 +1087,7 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         # 2. perform the put_key command 
         error_status =  gp.put_key(context, cardInfo, securityInfo, key_version_number,key_identifier, key_type, key_value, replace )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "put_key: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -949,7 +1106,7 @@ def put_scp_key(key_version_number, replace = False):
         # 2. perform the put_key command with the key_list 
         error_status =  gp.put_scp_key(context, cardInfo, securityInfo, key_version_number, found_key_list, replace )
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "put_scp_key: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -966,7 +1123,7 @@ def select(aid):
 
         error_status = gp.select_application(context, cardInfo, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "select: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -984,7 +1141,7 @@ def delete(aid):
 
         error_status = gp.delete_application(context, cardInfo, securityInfo, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "delete: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -999,7 +1156,7 @@ def delete_package(aid):
 
         error_status = gp.delete_package(context, cardInfo, securityInfo, aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "delete_package: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -1031,7 +1188,7 @@ def send(apdu):
 
         error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "send: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -1049,13 +1206,36 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
 
         error_status = gp.install_load(context, cardInfo, securityInfo, load_file_obj.get_aid(), security_domain_aid)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "upload_install: ")
 
         error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 192)
 
-        __handle_error_status__(error_status)
+        __handle_error_status__(error_status, "upload_install: ")
 
         error_status = gp.install_install(context, cardInfo, securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
+
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def upload(load_file_path, security_domain_aid ):
+    try:
+        global context    
+        global cardInfo    
+        global securityInfo    
+
+        # Verify the load File
+        load_file_obj = loadfile.Loadfile(load_file_path)
+
+        error_status = gp.install_load(context, cardInfo, securityInfo, load_file_obj.get_aid(), security_domain_aid)
+
+        __handle_error_status__(error_status, "upload: ")
+
+        error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 32)
+
+        __handle_error_status__(error_status, "upload: ")
 
 
     except BaseException as e:
@@ -1095,4 +1275,3 @@ def stop_timing():
         print("elapsed time:", str(datetime.now() - timer_start))
 
     timer_start = None
-

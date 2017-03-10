@@ -133,7 +133,41 @@ def Remove_ISO_9797_M2_Padding(data ):
         return toHexString(data_bytes[0:offset])
 
 
+def RSA_PKCS_1_Padding(data, key_size = 1024):
+    '''
+    Performs a PKCS_1 Padding use to sign data with a RSA Private Key.
+    The generated block of data is:
 
+    +----------+-------------+--------------+------+
+    | Leading  |  Block Type | Padding      | Data |
+    +==========+=============+=========+====+======+
+    |    00    |     01      | FF...FF | 00 |   D  |
+    +----------+-----------------------+----+------+
+
+        :param str data : the data to pad
+        :param int key_size: the RSA key size that will be used to sign data.
+
+        :returns str padded_data: the data padded
+
+    '''
+    # remove space if any
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+
+    padded_data="0001"
+
+    dataLength = int(len(data)/2)
+
+    key_size_in_byte = int ( key_size/8)
+        
+    numberOfFF = key_size_in_byte - 3 - dataLength
+
+    for i in range(0,numberOfFF):
+        padded_data = padded_data + "FF"
+
+    padded_data = padded_data + "00" + data
+
+    return padded_data 
 
 def DES_CBC(data, key, iv="0000000000000000"):
     ''' redirect to the selected crypto lib'''
@@ -639,6 +673,11 @@ class RSA_public_key():
             return True
         else:
             return False
+    
+    def encrypt(self, message, padding = padding.PKCS1v15()):
+        message_bytes  = bytes.fromhex(message)
+        encrypt_message = self.key_implementation.encrypt(message_bytes,padding)
+        return encrypt_message.hex().upper()
 
 
     def build(self):
@@ -689,6 +728,11 @@ class RSA_private_key():
         message_bytes  = bytes.fromhex(message)
         signature = self.key_implementation.sign(message_bytes,padding, hash_algorithm)
         return signature.hex().upper()
+    
+    def decrypt(self, message, padding = padding.PKCS1v15()):
+        message_bytes  = bytes.fromhex(message)
+        decrypt_message = self.key_implementation.decrypt(message_bytes,padding)
+        return decrypt_message.hex().upper()
 
     def build(self):
        

@@ -1,3 +1,4 @@
+import time
 import pygp.crypto as crypto
 from pygp.logger import *
 from pygp.connection.connection import *
@@ -12,6 +13,7 @@ from pygp.tlv import *
 # global variable for gp_functions
 last_apdu_response = None
 last_apdu_status   = None
+apdu_timing        = False
 
 def last_response():
     global last_apdu_response
@@ -21,6 +23,9 @@ def last_status():
     global last_apdu_status
     return last_apdu_status
 
+def apdu_timing(activated):
+    global apdu_timing
+    apdu_timing = activated
 
 def __check_security_info__(security_info):
     if security_info == None:
@@ -367,10 +372,14 @@ def send_APDU(card_context, card_info, securityInfo, capdu):
     
     global last_apdu_response
     global last_apdu_status
+    global apdu_timing
     
     log_start("send_APDU")
     #TODO: check context ? managing security info wrap the command
 
+    if apdu_timing == True:
+        start_time = time.perf_counter()
+    
     # wrap command
     error_status, c_wrapped_apdu = wrap_command(securityInfo, capdu)
     if error_status['errorStatus'] != 0x00:
@@ -388,6 +397,10 @@ def send_APDU(card_context, card_info, securityInfo, capdu):
     if error_status['errorStatus'] != 0x00:
         log_end("send_APDU", error_status['errorStatus'])
         return error_status, None
+
+    if apdu_timing == True:
+        end_time = time.perf_counter() 
+        log_info("command time: %3f ms" %(end_time - start_time))
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
@@ -1023,8 +1036,46 @@ def external_authenticate(card_context, card_info, security_info, security_level
     log_end("external_authenticate", error_status['errorStatus'])
     return error_status
 
+
+def registry_update(card_context, card_info, security_info, security_domain_AID, application_aid, application_privileges = "00",  registry_parameter_field = None, install_token = None):
+    log_start("registry_update")
+    
+    error_status = __check_security_info__(security_info)
+    if error_status['errorStatus'] != 0x00:
+        log_end("registry_update", error_status['errorStatus'])
+        return error_status
+    
+    # build the APDU
+    # mandatory fields
+    registry_update_apdu_data = lv(remove_space(security_domain_AID)) +  '00' + lv(remove_space(application_aid)) + lv(application_privileges)
+    # optionnal fields
+    parameter_field = ''
+    if registry_parameter_field != None:
+        parameter_field = parameter_field + 'EF' + lv(remove_space(registry_parameter_field))
+    else:
+        parameter_field =parameter_field + 'EF00'
+    
+    if install_token != None:
+        install_token = lv(install_token)
+    else:
+        install_token =  '00' #no token
+
+    registry_update_apdu = '80 E6 40 00'  + lv(registry_update_apdu_data + lv(parameter_field) + install_token)
+    
+    #TODO: check context ?
+    error_status, rapdu = send_APDU(card_context, card_info, security_info,  registry_update_apdu)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("registry_update", error_status['errorStatus'])
+        return error_status
+
+        
+    log_end("registry_update", error_status['errorStatus'])
+    return error_status
+
+
 def install_install(card_context, card_info, security_info, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
-    log_start("install_install_and_make_selectable")
+    log_start("install_install")
     
     error_status = __check_security_info__(security_info)
     if error_status['errorStatus'] != 0x00:
