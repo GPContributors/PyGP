@@ -1242,17 +1242,6 @@ def upload(load_file_path, security_domain_aid ):
         raise
 
 
-def sleep(seconds = 3):
-    '''
-        Set timer and suspend Python operation during given seconds.
-
-        :param float seconds: Floating point number to indicate sleep time
-    '''
-    import time
-    time.sleep(seconds)
-    print("Sleep for", str(seconds), "second(s)")
-
-
 def start_timing():
     '''
         Set start position of the timer to check elapsed time
