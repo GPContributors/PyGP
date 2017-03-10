@@ -49,7 +49,6 @@ def __handle_error_status__(error_status, function_name = ''):
         raise BaseException(error_status['errorMessage'])
 
 
-
 def stop_on_error(value):
     """
         Allows to stop the execution if an error occured.
@@ -1275,3 +1274,4 @@ def stop_timing():
         print("elapsed time:", str(datetime.now() - timer_start))
 
     timer_start = None
+    
