@@ -28,8 +28,7 @@ cardinfo     = None
 readername   = None
 securityInfo = None
 key_list    = []
-
-
+timer_start = None
 
 
 def __handle_error_status__(error_status):
@@ -48,6 +47,7 @@ def get_version():
     """
     return __version__
 
+
 def last_response():
     """
         Returns the last card response as a haxadecimal string.
@@ -59,6 +59,7 @@ def last_response():
     """
     return gp.last_response()
 
+
 def last_status():
     """
     Returns the last card status word as a haxadecimal string.
@@ -67,6 +68,7 @@ def last_status():
 
     """
     return gp.last_status()
+
 
 def set_log_mode(loggingMode, file_path = None):
     """
@@ -163,8 +165,6 @@ def echo(message, log_level=INFO_LEVEL):
         pass
 
 
-
-
 def set_key(*args):
     """
     Put key definition into the off card key repository.
@@ -200,9 +200,6 @@ def set_key(*args):
                 #remove the previous key
                 key_list.remove(found_key_list[0])
                 key_list.append(tuple (arg.split("/")))
-            
-
-
 
 
 def get_key_in_repository(key_version_number, key_identifier = None):
@@ -238,10 +235,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
                 found_key_list.append( (found_key_vn, found_key_id, found_key_type, found_key_value) )
     
     return found_key_list
-
-            
-            
-
+    
     # no key was found so raise exception
     raise BaseException ("No matching key found into the off card keys repository")
 
@@ -294,8 +288,8 @@ def terminal(readerName = None):
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
 
-#                if readerName == None:
-#                    raise BaseException("Failed to connect, please check the card.")
+                if readerName == None:
+                    raise BaseException("Failed to connect, please check the card.")
 
                 logger.log_debug('Using first available reader in the list: %s' %readerName)
         
@@ -309,6 +303,7 @@ def terminal(readerName = None):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def close():
     '''
@@ -473,6 +468,7 @@ def set_sd_state(lifeCycleState, aid):
         logger.log_error(str(e))
         raise
 
+
 def set_app_state(lifeCycleState, aid):
     """
         Modifies the Application Life Cycle State.
@@ -494,6 +490,7 @@ def set_app_state(lifeCycleState, aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def set_status(cardElement, lifeCycleState, aid):
     """
@@ -540,6 +537,7 @@ def store_data(data):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def get_data(identifier):
     """
@@ -665,6 +663,7 @@ def get_cplc():
         logger.log_error(str(e))    
         raise      
 
+
 def get_status_isd():
     try:
         global context       
@@ -679,12 +678,12 @@ def get_status_isd():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-
         
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def get_status_applications():
     try:
@@ -705,9 +704,6 @@ def get_status_applications():
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
-
-
 
 
 def get_status_executable_load_file():
@@ -748,6 +744,7 @@ def get_status_executable_load_files():
         logger.log_error(str(e))
         raise
 
+
 def get_status_executable_load_files_and_modules():
     try:
         global context       
@@ -767,6 +764,7 @@ def get_status_executable_load_files_and_modules():
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def ls():
     try:
@@ -799,6 +797,7 @@ def ls():
         logger.log_error(str(e))
         raise
 
+
 def channel(logical_channel):
     """
     Select the logical channel to use.
@@ -819,7 +818,6 @@ def channel(logical_channel):
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
 
 
 def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
@@ -870,7 +868,6 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         raise
 
 
-
 def extradite(security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
     try:
         global context       
@@ -886,6 +883,7 @@ def extradite(security_domain_AID, application_aid, identification_number = None
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges, application_specific_parameters, install_parameters, install_token = None):
     try:
@@ -905,7 +903,6 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
 
 
 def put_key(key_version_number, key_identifier = None, replace = False):
@@ -939,6 +936,7 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         logger.log_error(str(e))
         raise
 
+
 def put_scp_key(key_version_number, replace = False):
     try:
         global context       
@@ -956,6 +954,7 @@ def put_scp_key(key_version_number, replace = False):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def select(aid):
     try:
@@ -976,6 +975,7 @@ def select(aid):
     # reset previously configured security info if new application is selected
     securityInfo = None
 
+
 def delete(aid):
     try:
         global context    
@@ -989,6 +989,7 @@ def delete(aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def delete_package(aid):
     try:
@@ -1004,6 +1005,7 @@ def delete_package(aid):
         logger.log_error(str(e))
         raise
 
+
 def delete_key(key_version_number, key_identifier):
     try:
         global context    
@@ -1017,6 +1019,7 @@ def delete_key(key_version_number, key_identifier):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def send(apdu):
     try:
@@ -1033,7 +1036,6 @@ def send(apdu):
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
 
 
 def upload_install(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
@@ -1056,8 +1058,41 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
         error_status = gp.install_install(context, cardInfo, securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
 
 
-
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
+
+def sleep(seconds = 3):
+    '''
+        Set timer and suspend Python operation during given seconds.
+
+        :param float seconds: Floating point number to indicate sleep time
+    '''
+    import time
+    time.sleep(seconds)
+    print("Sleep for", str(seconds), "second(s)")
+
+
+def start_timing():
+    '''
+        Set start position of the timer to check elapsed time
+    '''
+    from datetime import datetime
+    global timer_start
+    timer_start = datetime.now()
+
+
+def stop_timing():
+    '''
+        Set end position of the timer to check elapsed time and diplay the result
+    '''
+    from datetime import datetime
+    global timer_start
+    if timer_start == None:
+        print("start_timing() should be executed first")
+    else:
+        print("elapsed time:", str(datetime.now() - timer_start))
+
+    timer_start = None
 
