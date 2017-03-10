@@ -128,7 +128,7 @@ def log_management_apdu(direction, byte_list_apdu):
         for i in range(0,len(byte_list_apdu)):
             message += ("%-0.2X " % byte_list_apdu[i])
             j = j + 1
-            if j== 16:
+            if j == 16 and len(byte_list_apdu) > (i+1):
                 message+="\n\t\t    "
                 j = 0
 
