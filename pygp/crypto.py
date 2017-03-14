@@ -18,8 +18,77 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 
+from cryptography import utils
 
 
+
+@utils.register_interface(ec.EllipticCurve)
+class NISTP384R1(object):
+    name = "secp384r1"
+    key_size = 384
+
+@utils.register_interface(ec.EllipticCurve)
+class NISTP521R1(object):
+    name = "secp521r1"
+    key_size = 384
+
+@utils.register_interface(ec.EllipticCurve)
+class NISTP256R1(object):
+    name = "prime256v1"
+    key_size = 384
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP192R1(object):
+    name = "brainpoolP192r1"
+    key_size = 192
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP192T1(object):
+    name = "brainpoolP192t1"
+    key_size = 192
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP256R1(object):
+    name = "brainpoolP256r1"
+    key_size = 256
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP256T1(object):
+    name = "brainpoolP256t1"
+    key_size = 256
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP384R1(object):
+    name = "brainpoolP384r1"
+    key_size = 384
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP384T1(object):
+    name = "brainpoolP384t1"
+    key_size = 384
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP512R1(object):
+    name = "brainpoolP512r1"
+    key_size = 512
+
+@utils.register_interface(ec.EllipticCurve)
+class BRAINPOOLP512T1(object):
+    name = "brainpoolP512t1"
+    key_size = 512
+
+
+ec._CURVE_TYPES['nistP384r1'] = NISTP384R1
+ec._CURVE_TYPES['nistP521r1'] = NISTP521R1
+ec._CURVE_TYPES['nistP256r1'] = NISTP256R1
+ec._CURVE_TYPES['brainpoolP192r1'] = BRAINPOOLP192R1
+ec._CURVE_TYPES['brainpoolP192t1'] = BRAINPOOLP192T1
+ec._CURVE_TYPES['brainpoolP256r1'] = BRAINPOOLP256R1
+ec._CURVE_TYPES['brainpoolP256t1'] = BRAINPOOLP256T1
+ec._CURVE_TYPES['brainpoolP384r1'] = BRAINPOOLP384R1
+ec._CURVE_TYPES['brainpoolP384t1'] = BRAINPOOLP384T1
+ec._CURVE_TYPES['brainpoolP512r1'] = BRAINPOOLP512R1
+ec._CURVE_TYPES['brainpoolP512t1'] = BRAINPOOLP512T1
 
 # 8 bytes long NULL ICV
 ICV_NULL_8 = '0000000000000000'
@@ -27,7 +96,12 @@ ICV_NULL_16 = '00000000000000000000000000000000'
 
 def RANDOM(bloc_size = 8):
     ''' 
-    Returns a block_size long random str
+        Returns a block_size long random hexadecimal string
+        
+        :param int bloc_size: the size in bye of the random string.
+
+        :returns str rand_str: the random hexadecimal string.
+
     '''
     import os
     rand = os.urandom(bloc_size)
@@ -35,10 +109,17 @@ def RANDOM(bloc_size = 8):
 
 def ISO_9797_M1_Padding_left(data, bloc_size = 8):
     ''' 
-    Performs a ISO_9797_M1 Padding by left.
-    This padding is done in the following way: before the original data null bytes is added 
-    in order for the whole block to have a length in bytes that is a multiple of 8
-    If original data length is already a multiple of 8, no padding is needed
+        Performs a ISO_9797_M1 Padding by left.
+        This padding is done in the following way: before the original data null bytes is added 
+        in order for the whole block to have a length in bytes that is a multiple of bloc_size
+        If original data length is already a multiple of bloc_size, no padding is needed
+
+        :param str data: Hexadecimal string to pad.
+
+        :param int bloc_size: the block size modulus
+
+        :returns str data_pad: the padded data.
+
     '''
     # remove space if any
     import re
@@ -52,10 +133,17 @@ def ISO_9797_M1_Padding_left(data, bloc_size = 8):
 
 def ISO_9797_M1_Padding(data, bloc_size = 8):
     ''' 
-    Performs a ISO_9797_M1 Padding.
-    This padding is done in the following way: after the original data null bytes is added 
-    in order for the whole block to have a length in bytes that is a multiple of 8
-    If original data length is already a multiple of 8, no padding is needed
+        Performs a ISO_9797_M1 Padding.
+        This padding is done in the following way: after the original data null bytes is added 
+        in order for the whole block to have a length in bytes that is a multiple of bloc_size
+        If original data length is already a multiple of bloc_size, no padding is needed
+
+        :param str data: Hexadecimal string to pad.
+
+        :param int bloc_size: the block size modulus
+
+        :returns str data_pad: the padded data.
+
     '''
     # remove space if any
     import re
@@ -68,10 +156,17 @@ def ISO_9797_M1_Padding(data, bloc_size = 8):
 
 def ISO_9797_M2_Padding_left(data, bloc_size = 8):
     ''' 
-    Performs a ISO_9797_M2 Padding by left.
-    This padding is done in the following way: before the original data a byte '80' is added 
-    in order for the whole block to have a length in bytes that is a multiple of 8
-    If original data length is already a multiple of 8, no padding is needed
+        Performs a ISO_9797_M2 Padding by left.
+        This padding is done in the following way: before the original data a byte '80' is added 
+        in order for the whole block to have a length in bytes that is a multiple of bloc_size
+        If original data length is already a multiple of bloc_size, no padding is needed
+            
+        :param str data: Hexadecimal string to pad.
+
+        :param int bloc_size: the block size modulus
+
+        :returns str data_pad: the padded data.
+
     '''
     # remove space if any
     import re
@@ -95,10 +190,18 @@ def ISO_9797_M2_Padding_left(data, bloc_size = 8):
 
 def ISO_9797_M2_Padding(data, bloc_size = 8):
     ''' 
-    Performs a ISO_9797_M2 Padding.
-    This padding is done in the following way: after the original data a byte '80' and then null bytes are added.
-    Then, in order for the whole block to have a length in bytes that is a multiple of 8, null bytes can be added
-    (byte '80' and null bytes are optional and not present in case the length is already a multiple of 8)
+        Performs a ISO_9797_M2 Padding.
+        This padding is done in the following way: after the original data a byte '80' and then null bytes are added.
+        Then, in order for the whole block to have a length in bytes that is a multiple of bloc_size, null bytes can be added
+        (byte '80' and null bytes are optional and not present in case the length is already a multiple of bloc_size)
+
+                
+        :param str data: Hexadecimal string to pad.
+
+        :param int bloc_size: the block size modulus
+
+        :returns str data_pad: the padded data.
+
     '''
 
     # remove space if any
@@ -112,7 +215,14 @@ def ISO_9797_M2_Padding(data, bloc_size = 8):
 
 def Remove_ISO_9797_M2_Padding(data ):
     ''' 
-    Remove a ISO_9797_M2 Padding into data and returns the new data
+        Remove a ISO_9797_M2 Padding from an hexadecimal string .
+        
+        :param str data: Hexadecimal string to unpad.
+
+        :param int bloc_size: the block size modulus
+
+        :returns str data_pad: the unpadded data.
+
     '''
     # remove space if any
     import re
@@ -135,16 +245,18 @@ def Remove_ISO_9797_M2_Padding(data ):
 
 def RSA_PKCS_1_Padding(data, key_size = 1024):
     '''
-    Performs a PKCS_1 Padding use to sign data with a RSA Private Key.
-    The generated block of data is:
+        Performs a PKCS_1 Padding use to sign data with a RSA Private Key.
+        The generated block of data is:
 
-    +----------+-------------+--------------+------+
-    | Leading  |  Block Type | Padding      | Data |
-    +==========+=============+=========+====+======+
-    |    00    |     01      | FF...FF | 00 |   D  |
-    +----------+-----------------------+----+------+
+        +----------+-------------+--------------+------+
+        | Leading  |  Block Type | Padding      | Data |
+        +==========+=============+=========+====+======+
+        |    00    |     01      | FF...FF | 00 |   D  |
+        +----------+-----------------------+----+------+
 
-        :param str data : the data to pad
+
+        :param str data: Hexadecimal string to pad.
+
         :param int key_size: the RSA key size that will be used to sign data.
 
         :returns str padded_data: the data padded
@@ -170,28 +282,84 @@ def RSA_PKCS_1_Padding(data, key_size = 1024):
     return padded_data 
 
 def DES_CBC(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a DES CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the ciphered data.
+    
+    '''
     # pad data if needed
     #TODO: maybe check the key size or take only the first 8 bytes ?
     return DES3_CBC(data, key, iv)
 
 def DES_INV_CBC(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a DES-1 CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to decipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the deciphered data.
+    
+    '''
     #TODO: maybe check the key size or take only the first 8 bytes ?
     return DES3_INV_CBC(data, key, iv)
 
 def DES_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+
+        Performs a DES ECB on the hexadecimal string using the specified key
+
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :returns str data_ret: the ciphered data.
+
+    '''
     #TODO: maybe check the key size or take only the first 8 bytes ?
     return DES3_ECB(data, key)
 
 def DES_INV_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
-    #TODO: maybe check the key size or take only the first 8 bytes ?
-    return DES3_INV_ECB(data, key)
+	''' 
+
+		Performs a DES-1 ECB on the hexadecimal string using the specified key
+		
+		:param str data: Hexadecimal string to decipher.
+
+		:param str key: the key to use
+
+		:returns str data_ret: the deciphered data.
+
+	'''
+	#TODO: maybe check the key size or take only the first 8 bytes ?
+	return DES3_INV_ECB(data, key)
 
 def DES3_CBC(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a 3DES CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the ciphered data.
+    
+    '''
     # pad data if needed
     data_bytes  = bytes.fromhex(data)
     key_bytes  = bytes.fromhex(key)
@@ -202,7 +370,19 @@ def DES3_CBC(data, key, iv="0000000000000000"):
     return ct.hex().upper() 
 
 def DES3_INV_CBC(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a 3DES-1 CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to decipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the deciphered data.
+    
+    '''
     # pad data if needed
     data_bytes  = bytes.fromhex(data)
     key_bytes  = bytes.fromhex(key)
@@ -213,26 +393,57 @@ def DES3_INV_CBC(data, key, iv="0000000000000000"):
     return ct.hex().upper() 
 
 def DES3_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
-    # pad data if needed
-    data_bytes  = bytes.fromhex(data)
-    key_bytes  = bytes.fromhex(key)
-    cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
-    encryptor = cipher.encryptor()
-    ct = encryptor.update(data_bytes) + encryptor.finalize()
-    return ct.hex().upper() 
+	''' 
+
+		Performs a 3DES ECB on the hexadecimal string using the specified key
+		
+		:param str data: Hexadecimal string to cipher.
+
+		:param str key: the key to use
+
+		:returns str data_ret: the ciphered data.
+
+	'''
+	# pad data if needed
+	data_bytes  = bytes.fromhex(data)
+	key_bytes  = bytes.fromhex(key)
+	cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
+	encryptor = cipher.encryptor()
+	ct = encryptor.update(data_bytes) + encryptor.finalize()
+	return ct.hex().upper() 
 
 def DES3_INV_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
-    # pad data if needed
-    data_bytes  = bytes.fromhex(data)
-    key_bytes  = bytes.fromhex(key)
-    cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
-    decryptor = cipher.decryptor()
-    ct = decryptor.update(data_bytes) + decryptor.finalize()
-    return ct.hex().upper() 
+	''' 
+
+		Performs a 3DES-1 ECB on the hexadecimal string using the specified key
+		
+		:param str data: Hexadecimal string to cipher.
+
+		:param str key: the key to use
+
+		:returns str data_ret: the ciphered data.
+
+	'''
+	# pad data if needed
+	data_bytes  = bytes.fromhex(data)
+	key_bytes  = bytes.fromhex(key)
+	cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
+	decryptor = cipher.decryptor()
+	ct = decryptor.update(data_bytes) + decryptor.finalize()
+	return ct.hex().upper() 
 
 def AES_CMAC(data, key):
+    ''' 
+    
+        Performs a AES CMAC on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :returns str data_ret: the ciphered data.
+    
+    '''
     
     data_bytes  = bytes.fromhex(data)
     key_bytes  = bytes.fromhex(key)
@@ -242,7 +453,17 @@ def AES_CMAC(data, key):
     return ct.hex().upper()
 
 def AES_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a AES ECB on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :returns str data_ret: the ciphered data.
+    
+    '''
     # pad data if needed
     data = ISO_9797_M1_Padding(data, 16)
     data_bytes  = bytes.fromhex(data)
@@ -254,7 +475,19 @@ def AES_ECB(data, key):
 
 
 def AES_CBC(data, key, iv="00000000000000000000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a AES CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to cipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (00000000000000000000000000000000 by default)
+
+        :returns str data_ret: the ciphered data.
+    
+    '''
     # pad data if needed
     data = ISO_9797_M1_Padding(data, 16)
     data_bytes  = bytes.fromhex(data)
@@ -266,7 +499,17 @@ def AES_CBC(data, key, iv="00000000000000000000000000000000"):
     return ct.hex().upper()
 
 def AES_INV_ECB(data, key):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a AES-1 ECB on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to decipher.
+
+        :param str key: the key to use
+
+        :returns str data_ret: the deciphered data.
+    
+    '''
     # pad data if needed
     data = ISO_9797_M1_Padding(data, 16)
     data_bytes  = bytes.fromhex(data)
@@ -278,7 +521,19 @@ def AES_INV_ECB(data, key):
 
 
 def AES_INV_CBC(data, key, iv="00000000000000000000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a AES-1 CBC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to decipher.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (00000000000000000000000000000000 by default)
+
+        :returns str data_ret: the deciphered data.
+    
+    '''
     # pad data if needed
     data = ISO_9797_M1_Padding(data, 16)
     data_bytes  = bytes.fromhex(data)
@@ -315,7 +570,14 @@ def MAC(data, key, iv="0000000000000000"):
     return value[-16:]
 
 def SHA1(data):
-    ''' return the SHA-1 algorithm on data '''
+    ''' 
+        Performs the SHA-1 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     # remove space if any
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
@@ -326,7 +588,14 @@ def SHA1(data):
     return dg.hex().upper()
 
 def SHA224(data):
-    ''' return the SHA 224 algorithm on data '''
+    ''' 
+        Performs the SHA-224 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
     data_bytes  = bytes.fromhex(data)
@@ -336,7 +605,14 @@ def SHA224(data):
     return dg.hex().upper()
 
 def SHA256(data):
-    ''' return the SHA 256 algorithm on data '''
+    ''' 
+        Performs the SHA-256 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
     data_bytes  = bytes.fromhex(data)
@@ -346,7 +622,14 @@ def SHA256(data):
     return dg.hex().upper()
 
 def SHA384(data):
-    ''' return the SHA 384 algorithm on data '''
+    ''' 
+        Performs the SHA-384 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
     data_bytes  = bytes.fromhex(data)
@@ -356,7 +639,14 @@ def SHA384(data):
     return dg.hex().upper()
 
 def SHA512(data):
-    ''' return the SHA 512 algorithm on data '''
+    ''' 
+        Performs the SHA-512 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
     data_bytes  = bytes.fromhex(data)
@@ -366,7 +656,14 @@ def SHA512(data):
     return dg.hex().upper()
 
 def MD5(data):
-    ''' return the MD5 algorithm on data '''
+    ''' 
+        Performs the MD5 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :returns str data_ret: the hash data.
+ 
+    '''
     import re
     data = ''.join( re.split( '\W+', data.upper() ) )
     data_bytes  = bytes.fromhex(data)
@@ -377,7 +674,16 @@ def MD5(data):
 
 
 def generate_RSA_keys(exponent, key_size = 1024 ):
-    #TODO: need to put comments
+    ''' 
+        RSA keys generation
+        
+        :param str exponent: the public key exponent.
+
+        :param int key_size: the key size in bit (1024 by default).
+
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     # call the library key generation
     private_key = rsa.generate_private_key(public_exponent = int(exponent,16), key_size=key_size, backend=default_backend())
     public_key = private_key.public_key()
@@ -404,7 +710,28 @@ def generate_RSA_keys(exponent, key_size = 1024 ):
 
 
 def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
-    #TODO: need to put comments
+    ''' 
+        Build RSA keys using specific values
+
+        :param str public_modulus: the public key modulus.
+        
+        :param str public_exponent: the public key exponent.
+
+        :param str p: 
+        
+        :param str q: 
+
+        :param str d: 
+        
+        :param str dmp1: 
+        
+        :param str dmq1: 
+        
+        :param str iqmp: 
+
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     import re
     # remove space if any
     public_modulus = ''.join( re.split( '\W+', public_modulus.upper() ) )
@@ -544,6 +871,116 @@ def DSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
         return False
     signature_verified = public_key.verify(message, signature, hash)
     return signature_verified
+
+
+
+
+
+def ECDSA_signature(message, private_key, hash_algorithm = 'SHA1'):
+    #TODO: need to put comments
+    import re
+    message = ''.join( re.split( '\W+', message.upper() ) )
+    hash = hashes.SHA1()
+    # managing the hash algorithm
+    if hash_algorithm == 'SHA1':
+        hash = hashes.SHA1()
+    elif hash_algorithm == 'SHA224':
+        hash = hashes.SHA224()
+    elif hash_algorithm == 'SHA256':
+        hash = hashes.SHA256()
+    elif hash_algorithm == 'SHA384':
+        hash = hashes.SHA384()
+    elif hash_algorithm == 'SHA512':
+        hash = hashes.SHA512()
+    else:
+        return None
+
+    signature = private_key.sign(message,hash)
+
+    return signature
+
+def ECDSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
+    #TODO: need to put comments
+    import re
+    message = ''.join( re.split( '\W+', message.upper() ) )
+    signature = ''.join( re.split( '\W+', signature.upper() ) )
+    
+    hash = hashes.SHA1()
+    # managing the hash algorithm
+    if hash_algorithm == 'SHA1':
+        hash = hashes.SHA1()
+    elif hash_algorithm == 'SHA224':
+        hash = hashes.SHA224()
+    elif hash_algorithm == 'SHA256':
+        hash = hashes.SHA256()
+    elif hash_algorithm == 'SHA384':
+        hash = hashes.SHA384()
+    elif hash_algorithm == 'SHA512':
+        hash = hashes.SHA512()
+    else:
+        return False
+    signature_verified = public_key.verify(message, signature, hash)
+    return signature_verified
+
+def generate_ECDH_key_agreement(private_key, public_key ):
+    #TODO: need to put comments
+    shared_secret = private_key.exchange(public_key) 
+    return shared_secret
+
+
+def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
+    #TODO: need to put comments
+    # call the library key generation
+    # get the EC class matching this curve name
+    try:
+        curve = ec._CURVE_TYPES[curve_name]
+    except KeyError:
+
+        return None,None
+
+    private_key = ec.generate_private_key(curve, default_backend())
+    public_key = private_key.public_key()
+    
+    # get the public key implementation values in order to create our own public key class
+    public_numbers = public_key.public_numbers()
+    x = public_numbers.x
+    y = public_numbers.y
+    curve = public_numbers.curve
+    
+    # create our EC public key object
+    publicKey = EC_public_key(x,  y, curve, public_key )
+
+    # get the private key implementation values in order to create our own private key class
+    private_numbers = private_key.private_numbers()
+
+    privateKey = EC_private_key(private_numbers.private_value, curve, private_key)
+        
+    return privateKey, publicKey
+
+
+def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
+    #TODO: need to put comments
+    import re
+    # remove space if any
+    p = ''.join( re.split( '\W+', p.upper() ) )
+    x = ''.join( re.split( '\W+', x.upper() ) )
+    y = ''.join( re.split( '\W+', y.upper() ) )
+
+    try:
+        curve = ec._CURVE_TYPES[curve_name]()
+    except KeyError:
+
+        return None,None
+
+    # build keys objects
+    private_key = EC_private_key(p, curve)
+    private_key.set_public_key(x, y)
+    private_key.build()
+    
+    public_key = EC_public_key(x, y, curve)
+    public_key.build()
+    
+    return private_key, public_key
 
 
 def generate_DSA_keys(key_size = 1024 ):
@@ -833,7 +1270,95 @@ class DH_private_key():
         str_value = str_value  + "\t key: " + self.get_key()+ "\n"
         return str_value
 
+class EC_public_key():
+    
+    def __init__(self, x, y, curve, key_implementation = None):
+        self.x = x
+        self.y = y
+        self.curve = curve
+        self.key_implementation = key_implementation
+    
+    def get_x(self):
+        return str(self.x)
+    def get_y(self):
+        return str(self.y)
+    def get_curve(self):
+        return str(self.curve)
+    def get_curve_name(self):
+        return str(self.curve.name)
+    
+    def verify(self, message, signature, hash_algorithm = hashes.SHA1()):
+        
+        if self.key_implementation != None:
+            message_bytes  = bytes.fromhex(message)
+            signature_bytes  = bytes.fromhex(signature)
+            try:
+                self.key_implementation.verify(signature_bytes,message_bytes, ec.ECDSA(hash_algorithm))
+            except:
+                return False
+            return True
+        else:
+            return False
 
+
+    def build(self):
+        ''' build the EC Public key object matching the crypto library used '''
+        ECPublicNumbers = ec.EllipticCurvePublicNumbers(int(self.x, 16), int(self.y, 16), self.curve)
+        self.key_implementation = ECPublicNumbers.public_key(backend=default_backend())
+        
+    
+    def __str__(self):
+        str_value = "EC Public Key:\n"
+        str_value = str_value  + "\t x      : " + self.get_x()+ "\n"
+        str_value = str_value  + "\t y      : " + self.get_y()+ "\n"
+        str_value = str_value  + "\t curve  : " + self.get_curve_name()+ "\n"
+        return str_value
+
+
+class EC_private_key():
+
+    def __init__(self, p, curve, key_implementation = None):
+        self.p = p
+        self.curve = curve
+        self.key_implementation = key_implementation
+        self.x = None
+        self.y = None
+    
+    def get_p(self):
+        return str(self.p)
+
+    def get_curve(self):
+        return str(self.curve)
+    
+    def get_curve_name(self):
+        return str(self.curve.name)
+
+    def set_public_key(self, x, y):
+        self.x = x
+        self.y = y
+
+
+    def build(self):
+        ''' build the EC Public key object matching the crypto library used '''
+        ECPublicNumbers = ec.EllipticCurvePublicNumbers(int(self.x, 16), int(self.y, 16), self.curve)
+        ECPrivateNumbers = ec.EllipticCurvePrivateNumbers(int(self.p, 16),ECPublicNumbers)
+        self.key_implementation = ECPrivateNumbers.private_key(backend=default_backend())
+    
+    def sign(self, message, hash_algorithm = hashes.SHA1()):
+            message_bytes  = bytes.fromhex(message)
+            signature = self.key_implementation.sign(message_bytes,ec.ECDSA(hash_algorithm))
+            return signature.hex().upper()
+
+    def exchange(self, public_key):
+        
+        secret = self.key_implementation.exchange(ec.ECDH(), public_key.key_implementation)
+        return secret.hex().upper()
+    
+    def __str__(self):
+        str_value = "EC Private Key:\n"
+        str_value = str_value  + "\t p      : " + self.get_p()+ "\n"
+        str_value = str_value  + "\t curve  : " + self.get_curve_name()+ "\n"
+        return str_value
 
 class DSA_public_key():
 
