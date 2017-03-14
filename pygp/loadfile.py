@@ -268,6 +268,34 @@ class Loadfile(object):
         else:
             pass
 
+    def get_dap_signature(self, key, key_type, hashAlgorithm = 'SHA1'):
+        ''' 
+        Returns the DAP Signature of this load file using the specified key, key type and the Hash algorithm ("SHA1" by default)
+        '''
+        #1. Get the hash
+        loadFileHash = self.getLoadFileDataHash(hashAlgorithm)
+        #2. Performs the signature
+        signature = None
+        if key_type == 'AES':
+            signature =  AES_CMAC(loadFileHash, key)
+        elif key_type == 'DES':
+            #2. Perform Padding if any
+            padded_loadFileHash = crypto.ISO_9797_M2_Padding(loadFileHash)
+            #Perform a MAC 33 on this block with ICV = 00
+            value1 = crypto.MAC(padded_loadFileHash,keyA, "00 00 00 00 00 00 00 00" )
+            #DES-1 (key B)
+            value2 = crypto.DES_INV_ECB(value1, keyB)
+            #DES ECB
+            signature =  crypto.DES_ECB(value2, keyA)
+        elif key_type == 'RSA':
+            # TODO
+            pass
+        else:
+            pass
+        
+        return signature
+
+
     def __str__(self):
         ''' return a string representation of this load file '''
         str_val = ''
