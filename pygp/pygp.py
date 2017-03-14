@@ -376,7 +376,9 @@ def change_protocol(protocol):
         Set the protocol to select during the next card reset
 
         :param str protocol: The protocol to select. 
+
         The value could be **'T0'** (T=0), **'T1'** (T=1), **'RAW'** (Raw mode) or **'Tx'** (T=1 or T=0))
+
     '''
     global current_protocol
     if protocol != 'T0' and protocol != 'T1' and protocol != 'RAW' and protocol != 'Tx':
@@ -592,7 +594,7 @@ def get_data(identifier):
 
 def get_key_information():
     '''
-        Get key information for the currently selected Application and log it through the logger
+        Get key information for the currently selected Application and log it through the logger.
     '''
     try:
         global context    
@@ -691,6 +693,12 @@ def get_cplc():
         raise      
 
 def get_status_isd():
+    """
+
+    Get the AID, the life cycle state and the privileges of the Issuer Security Domain and log it through the logger.
+    
+    """
+
     try:
         global context       
         global cardInfo   
@@ -712,6 +720,11 @@ def get_status_isd():
         raise
 
 def get_status_applications():
+    """
+
+    Get the AID, the life cycle state and the privileges of all applications and log it through the logger.
+    
+    """
     try:
         global context       
         global cardInfo   
@@ -736,6 +749,11 @@ def get_status_applications():
 
 
 def get_status_executable_load_file():
+    """
+
+    Get the AID and the life cycle state of all executable load files and log it through the logger.
+    
+    """
     try:
         global context       
         global cardInfo   
@@ -755,25 +773,12 @@ def get_status_executable_load_file():
         raise
 
 
-def get_status_executable_load_files():
-    try:
-        global context       
-        global cardInfo   
-        global securityInfo
-
-        # 1. perform the install command 
-        error_status, app_info_list =  gp.get_status(context, cardInfo, securityInfo, '20' )
-
-        __handle_error_status__(error_status, "get_status_executable_load_files: ")
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-
-    except BaseException as e:
-        logger.log_error(str(e))
-        raise
-
 def get_status_executable_load_files_and_modules():
+    """
+
+    Get the AID, the life cycle state and the modules AID of all executable load file and modules and then log it through the logger.
+
+    """
     try:
         global context       
         global cardInfo   
@@ -793,6 +798,12 @@ def get_status_executable_load_files_and_modules():
         raise
 
 def ls():
+    """
+
+    Get the status of all executable load file, modules and applications and then log it through the logger.
+    
+    """
+
     try:
         global context       
         global cardInfo   
@@ -844,6 +855,20 @@ def channel(logical_channel):
         raise
 
 def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21'):
+    """
+        Performs an initializee update using the specifiied key set and secure channel protocol.
+
+        :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
+        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
+        :param str ketsetversion: The Key Set version to used.
+        
+        
+        :returns str hostCryptogram: The off card host cryptogram to use into the :func:`ext_auth()` function.
+
+    """
     
     try:
         global context       
@@ -890,7 +915,25 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         raise
 
 def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
+    """
+        Performs an external authenticate  using the specifiied cryptogram and security level to use during secure messaging.
+
+        :param str hostCryptogram: The off card host cryptogram retreive during the :func:`init_update()` command.
+        :param int securitylevel: The security level of the secure messaging. Could be:
+        
+            * SECURITY_LEVEL_NO_SECURE_MESSAGING          (0x00): No secure messaging expected.
+            * SECURITY_LEVEL_C_MAC                        (0x01): C-MAC.
+            * SECURITY_LEVEL_C_DEC_C_MAC                  (0x03): C-DECRYPTION and C-MAC.
+            * SECURITY_LEVEL_R_MAC                        (0x10): R-MAC.
+            * SECURITY_LEVEL_C_MAC_R_MAC                  (0x11): C-MAC and R-MAC.
+            * SECURITY_LEVEL_C_DEC_C_MAC_R_MAC            (0x13): C-DECRYPTION, C-MAC and R-MAC.
+            * SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC      (0x33): C-Decryption, C-MAC, R-Mac and R-Encryption.
+        
+
+        .. note:: Depending of SCP mode used during  the :func:`init_update()`, some security level will not be available.
     
+
+    """
     try:
         global context       
         global cardInfo   
@@ -906,6 +949,30 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
         raise
 
 def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
+    """
+        Performs a complete authentication with the card using the specifiied key set, secure channel protocol,and security level for secure messaging.
+
+        :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
+        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
+        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
+        :param str ketsetversion: The Key Set version to used.
+        :param int securitylevel: The security level of the secure messaging. Could be:
+        
+            * SECURITY_LEVEL_NO_SECURE_MESSAGING          (0x00): No secure messaging expected.
+            * SECURITY_LEVEL_C_MAC                        (0x01): C-MAC.
+            * SECURITY_LEVEL_C_DEC_C_MAC                  (0x03): C-DECRYPTION and C-MAC.
+            * SECURITY_LEVEL_R_MAC                        (0x10): R-MAC.
+            * SECURITY_LEVEL_C_MAC_R_MAC                  (0x11): C-MAC and R-MAC.
+            * SECURITY_LEVEL_C_DEC_C_MAC_R_MAC            (0x13): C-DECRYPTION, C-MAC and R-MAC.
+            * SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC      (0x33): C-Decryption, C-MAC, R-Mac and R-Encryption.
+        
+
+        .. note:: Depending of SCP mode used, some security level will not be available.
+
+    """
+    
     try:
         global context       
         global cardInfo   
@@ -956,6 +1023,18 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
 
 
 def extradite(security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
+    '''
+        Performs an application extradition into a Security Domain.
+
+        :param str security_domain_AID: The AID of the Security domain.
+        :param str application_aid: The AID of the application to extradite.
+        :param str identification_number: The Identification Number of the Security Domain with the Token Verification privilege.
+        :param str image_Number: The Image Number of the Security Domain with the Token Verification privilege.
+        :param str application_provider_identifier: The Application Provider identifier.
+        :param str token_identifier: The Token identifier/number (digital signature counter).
+        :param str extraditeToken: The extradition token (None by default).
+		
+    '''
     try:
         global context       
         global cardInfo   
@@ -973,6 +1052,13 @@ def extradite(security_domain_AID, application_aid, identification_number = None
 
 
 def install_load(load_file_path, security_domain_aid ):
+    '''
+        Performs an install for load of a load file into a Security Domain.
+
+        :param str load_file_path: The path of the load file to install.
+        :param str security_domain_aid: The AID of the Security domain.
+
+    '''
     try:
         global context    
         global cardInfo    
@@ -990,7 +1076,23 @@ def install_load(load_file_path, security_domain_aid ):
         logger.log_error(str(e))
         raise
 
-def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
+def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = [], application_specific_parameters = None, install_parameters = None, install_token = None):
+    '''
+        Performs an install for install of an application into a Security Domain.
+
+        :param boolean make_selectable: True if the application must be selectable.
+        :param str executable_LoadFile_AID: The AID of the load file package.
+        :param str executable_Module_AID: The AID of the load file module.
+        :param str application_AID: The AID of the application instance.
+        :param str application_privileges: A list of :ref:`privileges` for the Application ([] by default).
+        :param str application_specific_parameters: The application parameters (under tag C9)
+        :param str install_parameters: The installation parameter (under tag EF).
+        :param str install_token: The install token (None by default).
+
+        .. note:: example of application_privileges parameter : ["SD", "TP"] means privilege Security Domain with Trusted Path
+
+
+    '''
     try:
         global context       
         global cardInfo   
@@ -1010,7 +1112,20 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
         raise
 
 
-def registry_update(security_domain_AID, application_aid, application_privileges = "00",  registry_parameter_field = None, install_token = None):
+def registry_update(security_domain_AID, application_aid, application_privileges = [],  registry_parameter_field = None, install_token = None):
+    '''
+        Performs an install for registry update of an application into a Security Domain.
+
+        :param str security_domain_AID: The AID of the security domain.
+        :param str application_AID: The AID of the application instance.
+        :param str application_privileges: A list of :ref:`privileges` for the Application ([] by default).
+        :param str registry_parameter_field: The application parameters (under tag EF)
+        :param str install_token: The install token (None by default).
+
+        .. note:: example of application_privileges parameter : ["SD", "TP"] means privilege Security Domain with Trusted Path
+
+
+    '''
     try:
         global context       
         global cardInfo   
@@ -1031,6 +1146,14 @@ def registry_update(security_domain_AID, application_aid, application_privileges
 
 
 def load_file(load_file_path, block_size = 32 ):
+    '''
+        Performs a set of load commands using the load file parameter.
+
+        :param str load_file_path: The path of the load file to load.
+        :param int block_size: The size of the data blocks.
+
+
+    '''
     try:
         global context    
         global cardInfo    
@@ -1054,7 +1177,7 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         Add or replace a key identifies by its version number and eventually its key identifier.
 
         :param str key_version_number: The key version number.
-        :param str key_identifier: The key idetifier.
+        :param str key_identifier: The key identifier.
         :param bool replace: True if the key must be replaced, False otherwize.
 
 
@@ -1081,6 +1204,16 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         raise
 
 def put_scp_key(key_version_number, replace = False):
+    '''
+        Add or replace scp keys identifies by its version number.
+
+        :param str key_version_number: The key version number.
+        :param bool replace: True if the key must be replaced, False otherwize.
+
+
+        .. note:: The key must be present in the the off card key repository before set it into the card. see :func:`set_key()`  
+
+    '''
     try:
         global context       
         global cardInfo   
@@ -1099,6 +1232,12 @@ def put_scp_key(key_version_number, replace = False):
         raise
 
 def select(aid):
+    '''
+        Performs an application selection by its AID.
+
+        :param str aid: The AID of the application to select
+
+    '''
     try:
         global context    
         global cardInfo    
@@ -1115,6 +1254,12 @@ def select(aid):
         raise
 
 def delete(aid):
+    '''
+        Performs an application deletion by its AID.
+
+        :param str aid: The AID of the application to delete.
+
+    '''
     try:
         global context    
         global cardInfo
@@ -1129,6 +1274,12 @@ def delete(aid):
         raise
 
 def delete_package(aid):
+    '''
+        Performs a package and related application deletion by its AID.
+
+        :param str aid: The AID of the package to delete.
+
+    '''
     try:
         global context    
         global cardInfo
@@ -1143,6 +1294,16 @@ def delete_package(aid):
         raise
 
 def delete_key(key_version_number, key_identifier):
+    '''
+        Performs a key deletion identifies by its version number and its key identifier.
+
+        :param str key_version_number: The key version number.
+        :param str key_identifier: The key identifier.
+
+
+        .. note:: The key is not deleted into the the off card key repository.  
+
+    '''
     try:
         global context    
         global cardInfo
@@ -1157,6 +1318,11 @@ def delete_key(key_version_number, key_identifier):
         raise
 
 def send(apdu):
+    '''
+        Send APDU Command according to the security level of the selected Security Domain
+
+        :param str apdu: The apdu command.
+    '''
     try:
         global context       
         global cardInfo   
@@ -1175,6 +1341,17 @@ def send(apdu):
 
 
 def upload_install(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
+    '''
+        Performs a full load of an application under the selected Security Domain
+
+        :param str load_file_path: The path of the load file to load.
+        :param str executable_LoadFile_AID: The AID of the load file package.
+        :param str executable_Module_AID: The AID of the load file module.
+        :param str application_AID: The AID of the application instance.
+
+
+    '''
+    
     try:
         global context    
         global cardInfo    
@@ -1200,6 +1377,15 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
         raise
 
 def upload(load_file_path, security_domain_aid ):
+    '''
+        Performs a load of an application under the Security Domain
+
+        :param str load_file_path: The path of the load file to load.
+        :param str security_domain_aid: The AID of the Security Domain.
+
+
+        .. note:: The install for install command is not send by this function.  
+    '''
     try:
         global context    
         global cardInfo    
