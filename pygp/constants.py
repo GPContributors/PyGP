@@ -15,8 +15,8 @@ The following constants valurs could be used with the :func:`set_status()` funct
 
 .. _privileges:
 		
-Security Domain privileges
---------------------------
+Application privileges
+----------------------
 		
 			+----------+---------------------------------+
 			| Value    |  Description                    |

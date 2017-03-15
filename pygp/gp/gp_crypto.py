@@ -99,7 +99,7 @@ def calculate_card_cryptogram_SCP02(sequenceCounter, cardChallenge, hostChalleng
     :param sequenceCounter (str): The sequence counter.
     :param cardChallenge (str): The card challenge.
     :param hostChallenge (str): The host challenge.
-    :param key (str) : The Session Encryption Key for calculating the card cryptogram.
+    :param session_enc_key (str) : The Session Encryption Key for calculating the card cryptogram.
 
 	:returns: (tuple): tuple containing:
 			- class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
