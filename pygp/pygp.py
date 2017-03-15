@@ -30,8 +30,7 @@ cardinfo     = None
 readername   = None
 securityInfo = None
 key_list    = []
-
-
+timer_start = None
 
 
 def __handle_error_status__(error_status, function_name = ''):
@@ -48,7 +47,6 @@ def __handle_error_status__(error_status, function_name = ''):
     if error_status['errorStatus'] == error.ERROR_STATUS_CRITICAL:
         # Always raise exception with the message on critical error
         raise BaseException(error_status['errorMessage'])
-
 
 
 def stop_on_error(value):
@@ -78,6 +76,7 @@ def get_version():
     """
     return __version__
 
+
 def last_response():
     """
         Returns the last card response as a haxadecimal string.
@@ -89,6 +88,7 @@ def last_response():
     """
     return gp.last_response()
 
+
 def last_status():
     """
     Returns the last card status word as a haxadecimal string.
@@ -97,6 +97,7 @@ def last_status():
 
     """
     return gp.last_status()
+
 
 def set_log_mode(loggingMode, file_path = None):
     """
@@ -200,8 +201,6 @@ def echo(message, log_level=INFO_LEVEL):
         pass
 
 
-
-
 def set_key(*args):
     """
     Put key definition into the off card key repository.
@@ -237,9 +236,6 @@ def set_key(*args):
                 #remove the previous key
                 key_list.remove(found_key_list[0])
                 key_list.append(tuple (arg.split("/")))
-            
-
-
 
 
 def get_key_in_repository(key_version_number, key_identifier = None):
@@ -275,10 +271,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
                 found_key_list.append( (found_key_vn, found_key_id, found_key_type, found_key_value) )
     
     return found_key_list
-
-            
-            
-
+    
     # no key was found so raise exception
     raise BaseException ("No matching key found into the off card keys repository")
 
@@ -330,7 +323,10 @@ def terminal(readerName = None):
                     error_status,cardInfo = conn.card_connect(context, str(readers.decode()), current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
-        
+
+                if readerName == None:
+                    raise BaseException("Failed to connect, please check the card.")
+
                 logger.log_debug('Using first available reader in the list: %s' %readerName)
         
             else:
@@ -343,6 +339,7 @@ def terminal(readerName = None):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def close():
     '''
@@ -371,6 +368,13 @@ def close():
         logger.log_error(str(e))
         raise
 
+    # reset global variable to prevent re-use them
+    context      = None
+    cardinfo     = None
+    readername   = None
+    securityInfo = None
+
+
 def change_protocol(protocol):
     '''
         Set the protocol to select during the next card reset
@@ -394,9 +398,6 @@ def change_protocol(protocol):
             current_protocol = conn.SCARD_PROTOCOL_Tx
         else:
             raise BaseException(" %s argument is invalid." % protocol)
-
-
-   
 
 
 def card():
@@ -431,6 +432,7 @@ def card():
         logger.log_error(str(e))
         raise
 
+
 def atr():
     """
         Reset inserted card and get ATR.
@@ -453,11 +455,12 @@ def atr():
         # return ATR information
         atr = conn.getATR(context,cardInfo)
 
-        return atr
+        print("ATR: " + str(atr))
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def select_isd():
     """
@@ -476,6 +479,9 @@ def select_isd():
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
+    # reset previously configured security info if new application is selected
+    securityInfo = None
 
 
 def set_sd_state(lifeCycleState, aid):
@@ -500,6 +506,7 @@ def set_sd_state(lifeCycleState, aid):
         logger.log_error(str(e))
         raise
 
+
 def set_app_state(lifeCycleState, aid):
     """
         Modifies the Application Life Cycle State.
@@ -521,6 +528,7 @@ def set_app_state(lifeCycleState, aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def set_status(cardElement, lifeCycleState, aid):
     """
@@ -567,6 +575,7 @@ def store_data(data):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def get_data(identifier):
     """
@@ -692,6 +701,7 @@ def get_cplc():
         logger.log_error(str(e))    
         raise      
 
+
 def get_status_isd():
     """
 
@@ -712,12 +722,12 @@ def get_status_isd():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-
         
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def get_status_applications():
     """
@@ -743,9 +753,6 @@ def get_status_applications():
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
-
-
 
 
 def get_status_executable_load_file():
@@ -791,11 +798,13 @@ def get_status_executable_load_files_and_modules():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def ls():
     """
@@ -823,15 +832,17 @@ def ls():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if exefile_info_list != None:        
+        if exefile_info_list != None:
             for app_info in exefile_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
         
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def channel(logical_channel):
     """
@@ -914,6 +925,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         logger.log_error(str(e))
         raise
 
+
 def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
         Performs an external authenticate  using the specifiied cryptogram and security level to use during secure messaging.
@@ -947,6 +959,7 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
@@ -1020,8 +1033,6 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         raise
 
 
-
-
 def extradite(security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
     '''
         Performs an application extradition into a Security Domain.
@@ -1075,6 +1086,7 @@ def install_load(load_file_path, security_domain_aid ):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = [], application_specific_parameters = None, install_parameters = None, install_token = None):
     '''
@@ -1171,7 +1183,6 @@ def load_file(load_file_path, block_size = 32 ):
         raise
 
 
-
 def put_key(key_version_number, key_identifier = None, replace = False):
     '''
         Add or replace a key identifies by its version number and eventually its key identifier.
@@ -1203,6 +1214,7 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         logger.log_error(str(e))
         raise
 
+
 def put_scp_key(key_version_number, replace = False):
     '''
         Add or replace scp keys identifies by its version number.
@@ -1231,6 +1243,7 @@ def put_scp_key(key_version_number, replace = False):
         logger.log_error(str(e))
         raise
 
+
 def select(aid):
     '''
         Performs an application selection by its AID.
@@ -1253,6 +1266,10 @@ def select(aid):
         logger.log_error(str(e))
         raise
 
+    # reset previously configured security info if new application is selected
+    securityInfo = None
+
+
 def delete(aid):
     '''
         Performs an application deletion by its AID.
@@ -1273,6 +1290,7 @@ def delete(aid):
         logger.log_error(str(e))
         raise
 
+
 def delete_package(aid):
     '''
         Performs a package and related application deletion by its AID.
@@ -1292,6 +1310,7 @@ def delete_package(aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def delete_key(key_version_number, key_identifier):
     '''
@@ -1317,6 +1336,7 @@ def delete_key(key_version_number, key_identifier):
         logger.log_error(str(e))
         raise
 
+
 def send(apdu):
     '''
         Send APDU Command according to the security level of the selected Security Domain
@@ -1330,14 +1350,13 @@ def send(apdu):
         global key_list    
         global securityInfo    
 
-        error_status =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
+        error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
 
         __handle_error_status__(error_status, "send: ")
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
 
 
 def upload_install(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
@@ -1371,10 +1390,10 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
         error_status = gp.install_install(context, cardInfo, securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
 
 
-
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def upload(load_file_path, security_domain_aid ):
     '''
@@ -1407,3 +1426,26 @@ def upload(load_file_path, security_domain_aid ):
         logger.log_error(str(e))
         raise
 
+
+def start_timing():
+    '''
+        Set start position of the timer to check elapsed time
+    '''
+    from datetime import datetime
+    global timer_start
+    timer_start = datetime.now()
+
+
+def stop_timing():
+    '''
+        Set end position of the timer to check elapsed time and diplay the result
+    '''
+    from datetime import datetime
+    global timer_start
+    if timer_start == None:
+        print("start_timing() should be executed first")
+    else:
+        print("elapsed time:", str(datetime.now() - timer_start))
+
+    timer_start = None
+    
