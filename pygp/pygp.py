@@ -33,7 +33,6 @@ key_list    = []
 
 
 
-
 def __handle_error_status__(error_status, function_name = ''):
     global must_stop_on_error
     
@@ -50,20 +49,20 @@ def __handle_error_status__(error_status, function_name = ''):
         raise BaseException(error_status['errorMessage'])
 
 
-
 def stop_on_error(value):
     """
         Allows to stop the execution if an error occured.
 
-        :param bool value: True if execution should be stopped, False otherwize
+        :param bool value: True if execution should be stopped, False otherwise
 
     """
     global must_stop_on_error
     must_stop_on_error = value
 
+
 def sleep(milliseconds):
     """
-        Delay execution for a given amount of time expressed in milliseconds
+        Delay execution for a given amount of time in millisecond unit.
 
         :param int milliseconds: a number of milliseconds to delay execution process
 
@@ -74,9 +73,10 @@ def sleep(milliseconds):
 
 def get_version():
     """
-    Returns the PyGP APi current version 
+        Returns current PyGP API version 
     """
     return __version__
+
 
 def last_response():
     """
@@ -89,6 +89,7 @@ def last_response():
     """
     return gp.last_response()
 
+
 def last_status():
     """
     Returns the last card status word as a haxadecimal string.
@@ -97,6 +98,7 @@ def last_status():
 
     """
     return gp.last_status()
+
 
 def set_log_mode(loggingMode, file_path = None):
     """
@@ -131,7 +133,6 @@ def set_log_mode(loggingMode, file_path = None):
             
             # set the logging mode to the console only with  information logging level and APDU exchanges
             set_log_mode(CONSOLE_TRACE|INFO_LEVEL|APDU)
-
 
     """
     global apdu_timer
@@ -173,7 +174,7 @@ def set_log_mode(loggingMode, file_path = None):
 
 def echo(message, log_level=INFO_LEVEL):
     """
-        Log the message argument depending of the loggin level
+        Log the message argument depending on the logging level
 
          :param str message: the message to log.
          :param int log_level: the logging level of this message
@@ -198,8 +199,6 @@ def echo(message, log_level=INFO_LEVEL):
         logger.log_debug(message)
     else:
         pass
-
-
 
 
 def set_key(*args):
@@ -239,9 +238,6 @@ def set_key(*args):
                 key_list.append(tuple (arg.split("/")))
             
 
-
-
-
 def get_key_in_repository(key_version_number, key_identifier = None):
     """
         Returns the list of Tuple (key value/Key type) stored into the off card key repository regarding their key version number and eventually their key identifier.
@@ -275,10 +271,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
                 found_key_list.append( (found_key_vn, found_key_id, found_key_type, found_key_value) )
     
     return found_key_list
-
-            
-            
-
+    
     # no key was found so raise exception
     raise BaseException ("No matching key found into the off card keys repository")
 
@@ -288,7 +281,6 @@ def terminal(readerName = None):
         Open the terminal using its name. If no terminal name is entered, we use the first 'available' reader found in the registry
 
         :param str readerName: the name of the terminal to open.
-
 
         :returns: a dict mapping error codes with error status ERROR_STATUS_SUCCESS if no error occurs, error code and error message otherwise.
         
@@ -301,7 +293,6 @@ def terminal(readerName = None):
             }
         
         :raises ValueError: if illegal parameter combination is supplied.
-
 
     """
     try:
@@ -330,7 +321,10 @@ def terminal(readerName = None):
                     error_status,cardInfo = conn.card_connect(context, str(readers.decode()), current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
-        
+
+                if readerName == None:
+                    raise BaseException("Failed to connect, please check the card.")
+
                 logger.log_debug('Using first available reader in the list: %s' %readerName)
         
             else:
@@ -343,6 +337,7 @@ def terminal(readerName = None):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def close():
     '''
@@ -371,6 +366,13 @@ def close():
         logger.log_error(str(e))
         raise
 
+    # reset global variables after release context
+    context      = None
+    cardinfo     = None
+    readername   = None
+    securityInfo = None
+
+
 def change_protocol(protocol):
     '''
         Set the protocol to select during the next card reset
@@ -396,14 +398,11 @@ def change_protocol(protocol):
             raise BaseException(" %s argument is invalid." % protocol)
 
 
-   
-
-
 def card():
     """
         Reset inserted card, get ATR and select the Issuer Security Domain
 
-        :returns:  str  the card ATR
+        :returns: str the card ATR
 
         .. note:: This command should be executed between opening a terminal and sending other card-related commands.
 
@@ -430,6 +429,7 @@ def card():
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def atr():
     """
@@ -459,9 +459,10 @@ def atr():
         logger.log_error(str(e))
         raise
 
+
 def select_isd():
     """
-    Select the Issuer Security Domain using the select by default APDU command.
+        Select the Issuer Security Domain using select by default APDU command.
     """
     try:
         global context    
@@ -522,6 +523,7 @@ def set_app_state(lifeCycleState, aid):
         logger.log_error(str(e))
         raise
 
+
 def set_status(cardElement, lifeCycleState, aid):
     """
         Modifies the card Life Cycle State or the Application Life Cycle State.
@@ -548,7 +550,7 @@ def set_status(cardElement, lifeCycleState, aid):
 
 def store_data(data):
     """
-        Allows to transfer data to an Application or the Security Domain processing the command.
+        Allows to transfer data to an Application or Security Domain processing the command.
         Depending of the data length, Multiple STORE DATA commands are used to send data to the Application or Security Domain
         by breaking the data into smaller components for transmission.
 
@@ -567,6 +569,7 @@ def store_data(data):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def get_data(identifier):
     """
@@ -692,10 +695,10 @@ def get_cplc():
         logger.log_error(str(e))    
         raise      
 
+
 def get_status_isd():
     """
-
-    Get the AID, the life cycle state and the privileges of the Issuer Security Domain and log it through the logger.
+        Get the AID, the life cycle state and the privileges of the Issuer Security Domain and log it through the logger.
     
     """
 
@@ -712,17 +715,16 @@ def get_status_isd():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-
-        
+            
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
+
 def get_status_applications():
     """
-
-    Get the AID, the life cycle state and the privileges of all applications and log it through the logger.
+        Get the AID, the life cycle state and the privileges of all applications and log it through the logger.
     
     """
     try:
@@ -738,20 +740,15 @@ def get_status_applications():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        
-
+    
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
 
-
-
-
 def get_status_executable_load_file():
     """
-
-    Get the AID and the life cycle state of all executable load files and log it through the logger.
+        Get the AID and the life cycle state of all executable load files and log it through the logger.
     
     """
     try:
@@ -775,8 +772,7 @@ def get_status_executable_load_file():
 
 def get_status_executable_load_files_and_modules():
     """
-
-    Get the AID, the life cycle state and the modules AID of all executable load file and modules and then log it through the logger.
+        Get the AID, the life cycle state and the modules AID of all executable load file and modules and then log it through the logger.
 
     """
     try:
@@ -791,19 +787,19 @@ def get_status_executable_load_files_and_modules():
         if app_info_list != None:
             for app_info in app_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
+
 def ls():
     """
-
-    Get the status of all executable load file, modules and applications and then log it through the logger.
+        Get the status of all executable load file, modules and applications and then log it through the logger.
     
     """
-
     try:
         global context       
         global cardInfo   
@@ -826,20 +822,21 @@ def ls():
         if exefile_info_list != None:        
             for app_info in exefile_info_list:
                 logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
-        
-
+                if app_info['module_aid'] != None:
+                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+    
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
+
 def channel(logical_channel):
     """
-    Select the logical channel to use.
+        Selects the logical channel to use.
 
-    :param int logical_channel: The Logical Channel number (0..3) to select.
+        :param int logical_channel: The Logical Channel number (0..3) to select.
 
-    .. note:: You must track on your own, what channels are open.
+        .. note:: You must track on your own, what channels are opened.
 
     """
     try:
@@ -854,9 +851,10 @@ def channel(logical_channel):
         logger.log_error(str(e))
         raise
 
+
 def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21'):
     """
-        Performs an initializee update using the specifiied key set and secure channel protocol.
+        Performs an initializee update using specifiied key set and secure channel protocol.
 
         :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
@@ -865,11 +863,9 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
         :param str ketsetversion: The Key Set version to used.
         
-        
         :returns str hostCryptogram: The off card host cryptogram to use into the :func:`ext_auth()` function.
 
     """
-    
     try:
         global context       
         global cardInfo   
@@ -914,11 +910,12 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         logger.log_error(str(e))
         raise
 
+
 def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
-        Performs an external authenticate  using the specifiied cryptogram and security level to use during secure messaging.
+        Performs an external authenticate using the specifiied cryptogram and security level to use during secure messaging.
 
-        :param str hostCryptogram: The off card host cryptogram retreive during the :func:`init_update()` command.
+        :param str hostCryptogram: The off card host cryptogram retreived during the :func:`init_update()` command.
         :param int securitylevel: The security level of the secure messaging. Could be:
         
             * SECURITY_LEVEL_NO_SECURE_MESSAGING          (0x00): No secure messaging expected.
@@ -929,10 +926,8 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
             * SECURITY_LEVEL_C_DEC_C_MAC_R_MAC            (0x13): C-DECRYPTION, C-MAC and R-MAC.
             * SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC      (0x33): C-Decryption, C-MAC, R-Mac and R-Encryption.
         
-
         .. note:: Depending of SCP mode used during  the :func:`init_update()`, some security level will not be available.
     
-
     """
     try:
         global context       
@@ -947,6 +942,7 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
@@ -968,11 +964,9 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
             * SECURITY_LEVEL_C_DEC_C_MAC_R_MAC            (0x13): C-DECRYPTION, C-MAC and R-MAC.
             * SECURITY_LEVEL_C_DEC_R_ENC_C_MAC_R_MAC      (0x33): C-Decryption, C-MAC, R-Mac and R-Encryption.
         
-
         .. note:: Depending of SCP mode used, some security level will not be available.
 
     """
-    
     try:
         global context       
         global cardInfo   
@@ -1018,8 +1012,6 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
-
 
 
 def extradite(security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
@@ -1076,6 +1068,7 @@ def install_load(load_file_path, security_domain_aid ):
         logger.log_error(str(e))
         raise
 
+
 def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = [], application_specific_parameters = None, install_parameters = None, install_token = None):
     '''
         Performs an install for install of an application into a Security Domain.
@@ -1090,7 +1083,6 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
         :param str install_token: The install token (None by default).
 
         .. note:: example of application_privileges parameter : ["SD", "TP"] means privilege Security Domain with Trusted Path
-
 
     '''
     try:
@@ -1124,7 +1116,6 @@ def registry_update(security_domain_AID, application_aid, application_privileges
 
         .. note:: example of application_privileges parameter : ["SD", "TP"] means privilege Security Domain with Trusted Path
 
-
     '''
     try:
         global context       
@@ -1152,7 +1143,6 @@ def load_file(load_file_path, block_size = 32 ):
         :param str load_file_path: The path of the load file to load.
         :param int block_size: The size of the data blocks.
 
-
     '''
     try:
         global context    
@@ -1171,17 +1161,15 @@ def load_file(load_file_path, block_size = 32 ):
         raise
 
 
-
 def put_key(key_version_number, key_identifier = None, replace = False):
     '''
-        Add or replace a key identifies by its version number and eventually its key identifier.
+        Add or replace a new key identified by its version number and key identifier.
 
         :param str key_version_number: The key version number.
         :param str key_identifier: The key identifier.
-        :param bool replace: True if the key must be replaced, False otherwize.
+        :param bool replace: True if the key must be replaced, False otherwise.
 
-
-        .. note:: The key must be present in the the off card key repository before set it into the card. see :func:`set_key()`  
+        .. note:: The key must be presented in the the off card key repository before set it into the card. see :func:`set_key()`  
 
     '''
     try:
@@ -1203,13 +1191,13 @@ def put_key(key_version_number, key_identifier = None, replace = False):
         logger.log_error(str(e))
         raise
 
+
 def put_scp_key(key_version_number, replace = False):
     '''
-        Add or replace scp keys identifies by its version number.
+        Add or replace scp keys identified by its version number.
 
         :param str key_version_number: The key version number.
-        :param bool replace: True if the key must be replaced, False otherwize.
-
+        :param bool replace: True if the key must be replaced, False otherwise.
 
         .. note:: The key must be present in the the off card key repository before set it into the card. see :func:`set_key()`  
 
@@ -1230,6 +1218,7 @@ def put_scp_key(key_version_number, replace = False):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def select(aid):
     '''
@@ -1253,6 +1242,7 @@ def select(aid):
         logger.log_error(str(e))
         raise
 
+
 def delete(aid):
     '''
         Performs an application deletion by its AID.
@@ -1272,6 +1262,7 @@ def delete(aid):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def delete_package(aid):
     '''
@@ -1293,13 +1284,13 @@ def delete_package(aid):
         logger.log_error(str(e))
         raise
 
+
 def delete_key(key_version_number, key_identifier):
     '''
         Performs a key deletion identifies by its version number and its key identifier.
 
         :param str key_version_number: The key version number.
         :param str key_identifier: The key identifier.
-
 
         .. note:: The key is not deleted into the the off card key repository.  
 
@@ -1317,9 +1308,10 @@ def delete_key(key_version_number, key_identifier):
         logger.log_error(str(e))
         raise
 
+
 def send(apdu):
     '''
-        Send APDU Command according to the security level of the selected Security Domain
+        Sends an APDU Command according to the security level of the selected Security Domain
 
         :param str apdu: The apdu command.
     '''
@@ -1330,14 +1322,13 @@ def send(apdu):
         global key_list    
         global securityInfo    
 
-        error_status =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
+        error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
 
         __handle_error_status__(error_status, "send: ")
 
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
 
 
 def upload_install(load_file_path, security_domain_aid, executable_module_aid, application_aid ):
@@ -1349,9 +1340,7 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
         :param str executable_Module_AID: The AID of the load file module.
         :param str application_AID: The AID of the application instance.
 
-
     '''
-    
     try:
         global context    
         global cardInfo    
@@ -1370,11 +1359,10 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
 
         error_status = gp.install_install(context, cardInfo, securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
 
-
-
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
 
 def upload(load_file_path, security_domain_aid ):
     '''
@@ -1382,7 +1370,6 @@ def upload(load_file_path, security_domain_aid ):
 
         :param str load_file_path: The path of the load file to load.
         :param str security_domain_aid: The AID of the Security Domain.
-
 
         .. note:: The install for install command is not send by this function.  
     '''
@@ -1401,7 +1388,6 @@ def upload(load_file_path, security_domain_aid ):
         error_status = gp.load_blocks(context, cardInfo, securityInfo, load_file_path, block_size = 32)
 
         __handle_error_status__(error_status, "upload: ")
-
 
     except BaseException as e:
         logger.log_error(str(e))
