@@ -244,8 +244,17 @@ key_types_dict = {
                 "A7" :"RSA Private Key  Chinese Remainder DP1 component  )",
                 "A8" :"RSA Private Key  Chinese Remainder DQ1 component )",
                 "A9" :"RFU (asymmetric algorithms)",
-                "FF" :"Extended format"
-               
+                "FF" :"Extended format",
+                "B0" :"ECC public key",
+                "B1" :"ECC private key",
+                "B2" :"ECC field parameter P(field specification)",
+                "B3" :"ECC field parameter A(first coefficient)",
+                "B4" :"ECC field parameter B(second coefficient)",
+                "B5" :"ECC field parameter G(generator)",
+                "B6" :"ECC field parameter N(order of generator)",
+                "B7" :"ECC filed parameter k(cofactor of order of generator)",
+                "F0" :"Key parameter reference"
+                
                }
 
 
