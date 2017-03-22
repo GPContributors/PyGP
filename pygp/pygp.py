@@ -247,7 +247,7 @@ def get_key_in_repository(key_version_number, key_identifier = None):
         Returns the list of Tuple (key value/Key type) stored into the off card key repository regarding their key version number and eventually their key identifier.
 
         :param str keysetversion: the key set version.
-        :param str keytype: the key type.
+        :param str key_identifier: the key identifier.
 
         :returns list key_list: A list of Tuple (key_version_number, key_id, key_type, key_value) matching the key version number
 
@@ -853,6 +853,37 @@ def channel(logical_channel):
     except BaseException as e:
         logger.log_error(str(e))
         raise
+
+
+def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE ):
+    """
+        Performs an internal authenticate command using the specified parameters. 
+
+        :param str key_version_number: the key set version.
+        :param str key_identifier: the key identifier.
+        :param str crt_data: The data for key establishment.
+        :param str ePK_OCE: The Ephemeral public key of the OCE used for key agreement
+       
+        
+        :returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
+
+    """
+    try:
+        global context       
+        global cardInfo   
+        global securityInfo
+
+        # 1. perform the internal authenticate command 
+        error_status, rapdu =  gp.internal_authenticate(context, cardInfo, key_version_number,  key_identifier, crt_data , ePK_OCE )
+
+        __handle_error_status__(error_status, "internal_auth: ")
+
+        return error_status, rapdu
+       
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
 
 def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21'):
     """

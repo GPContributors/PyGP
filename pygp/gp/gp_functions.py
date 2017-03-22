@@ -994,6 +994,32 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
     log_end("initialize_update", error_status['errorStatus'])
     return error_status, securityInfo, host_cryptogram
 
+def internal_authenticate(card_context, card_info, key_version_number, key_identifier , crt_data , ePK_OCE ):
+    
+    log_start("internal_authenticate")
+    
+    error_status = __check_security_info__(security_info)
+    if error_status['errorStatus'] != 0x00:
+        log_end("internal_authenticate", error_status['errorStatus'])
+        return error_status
+    
+    # build the APDU
+    data = "5F49" + lv(ePK_OCE)
+    data_field = crt_data + data
+
+    internal_authenticate_apdu = '80 88' key_version_number + key_identifier + lv(data_field)
+    
+    #TODO: check context ?
+    error_status, rapdu = send_APDU(card_context, card_info, None,  internal_authenticate)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("internal_authenticate", error_status['errorStatus'])
+        return error_status
+
+        
+    log_end("internal_authenticate", error_status['errorStatus'])
+    return error_status
+    
 
 def external_authenticate(card_context, card_info, security_info, security_level, host_cryptogram):
 

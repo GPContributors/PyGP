@@ -546,12 +546,36 @@ def AES_INV_CBC(data, key, iv="00000000000000000000000000000000"):
 
 
 def MAC33(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a MAC33 on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to mac.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the MAC33 of the data.
+    
+    '''
     value = DES3_CBC(data, key, iv)
     return value[-16:]
 
 def MAC3(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a MAC3 on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to mac.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the MAC3 of the data.
+    
+    '''
     # must check the key size
     # remove space if any
     import re
@@ -565,7 +589,19 @@ def MAC3(data, key, iv="0000000000000000"):
     return value[-16:]
 
 def MAC(data, key, iv="0000000000000000"):
-    ''' redirect to the selected crypto lib'''
+    ''' 
+    
+        Performs a MAC on the hexadecimal string using the specified key and the specified initial vector
+        
+        :param str data: Hexadecimal string to mac.
+
+        :param str key: the key to use
+
+        :param str iv: the initial vector (0000000000000000 by default)
+
+        :returns str data_ret: the MAC of the data.
+    
+    '''
     value = DES_CBC(data, key, iv)
     return value[-16:]
 
@@ -717,17 +753,17 @@ def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
         
         :param str public_exponent: the public key exponent.
 
-        :param str p: 
+        :param str p: the private key large_modulus 
         
-        :param str q: 
+        :param str q: the private key small_modulus 
 
-        :param str d: 
+        :param str d: The private key exponent
         
-        :param str dmp1: 
+        :param str dmp1: the key component d mod (p-1)
         
-        :param str dmq1: 
+        :param str dmq1: the key component d mod (q-1)
         
-        :param str iqmp: 
+        :param str iqmp: the key component q-1 mod p
 
         :returns tuple data_ret: the private and public key objects
  
@@ -753,7 +789,20 @@ def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
     return private_key, public_key
 
 def RSA_signature(message, private_key, padding_algorithm = 'PKCS1', hash_algorithm = 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a RSA signature on data using the padding and hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+        
+        :param str private_key: the private key object see :func:`build_RSA_keys()` or :func:`generate_RSA_keys()`
+
+        :param str padding_algorithm: the padding to apply on data. Could be  'PKCS1', 'PSS' or 'OEAP'
+        
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns str data_ret: the signature
+ 
+    '''
     import re
     message = ''.join( re.split( '\W+', message.upper() ) )
     # managing the padding
@@ -789,7 +838,22 @@ def RSA_signature(message, private_key, padding_algorithm = 'PKCS1', hash_algori
     return signature
 
 def RSA_verify( message, signature, public_key, padding_algorithm= 'PKCS1', hash_algorithm= 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a RSA signature verification on data using the padding and hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+
+        :param str signature: the signature of the message.
+        
+        :param str public_key: the public key object see :func:`build_RSA_keys()` or :func:`generate_RSA_keys()`
+
+        :param str padding_algorithm: the padding to apply on data. Could be  'PKCS1', 'PSS' or 'OEAP'
+        
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns bool data_ret: True if the signature is verified, False otherwize
+ 
+    '''
 
     # remove space if any
     import re
@@ -827,7 +891,18 @@ def RSA_verify( message, signature, public_key, padding_algorithm= 'PKCS1', hash
     return signature_verified
 
 def DSA_signature(message, private_key, hash_algorithm = 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a DSA signature on data using hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+        
+        :param str private_key: the private key object see :func:`build_DSA_keys()` or :func:`generate_DSA_keys()`
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns str data_ret: the signature
+ 
+    '''
     import re
     message = ''.join( re.split( '\W+', message.upper() ) )
     hash = hashes.SHA1()
@@ -850,7 +925,20 @@ def DSA_signature(message, private_key, hash_algorithm = 'SHA1'):
     return signature
 
 def DSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a DSA signature verification on data using the hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+
+        :param str signature: the signature of the message.
+        
+        :param str public_key: the public key object see :func:`build_RSA_keys()` or :func:`generate_RSA_keys()`
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns bool data_ret: True if the signature is verified, False otherwize
+ 
+    '''
     import re
     message = ''.join( re.split( '\W+', message.upper() ) )
     signature = ''.join( re.split( '\W+', signature.upper() ) )
@@ -877,7 +965,18 @@ def DSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
 
 
 def ECDSA_signature(message, private_key, hash_algorithm = 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a ECDSA signature on data using hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+        
+        :param str private_key: the private key object see :func:`build_ECDSA_keys()` or :func:`generate_ECDSA_keys()`
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns str data_ret: the signature
+ 
+    '''
     import re
     message = ''.join( re.split( '\W+', message.upper() ) )
     hash = hashes.SHA1()
@@ -900,7 +999,20 @@ def ECDSA_signature(message, private_key, hash_algorithm = 'SHA1'):
     return signature
 
 def ECDSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
-    #TODO: need to put comments
+    ''' 
+        Performs a ECDSA signature verification on data using the hash algorithm.
+
+        :param str message: the message to sign as hexadecimal string.
+
+        :param str signature: the signature of the message.
+        
+        :param str public_key: the public key object see :func:`build_EC_keys()` or :func:`generate_EC_keys()`
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns bool data_ret: True if the signature is verified, False otherwize
+ 
+    '''
     import re
     message = ''.join( re.split( '\W+', message.upper() ) )
     signature = ''.join( re.split( '\W+', signature.upper() ) )
@@ -923,14 +1035,54 @@ def ECDSA_verify(message, signature, public_key, hash_algorithm= 'SHA1'):
     return signature_verified
 
 def generate_ECDH_key_agreement(private_key, public_key ):
-    #TODO: need to put comments
+    ''' 
+        Performs a ECDH key aggrement.
+
+        :param str private_key: the private key object see :func:`build_EC_keys()` or :func:`generate_EC_keys()`
+
+        :param str public_key: the public key object see :func:`build_EC_keys()` or :func:`generate_EC_keys()`
+
+        :returns str data_ret: The agreed key
+ 
+    '''
     shared_secret = private_key.exchange(public_key) 
     return shared_secret
 
 
 def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
-    #TODO: need to put comments
-    # call the library key generation
+    ''' 
+        EC keys generation
+        
+        :param str curve_name: the name of the curve. Possible curve names:
+
+        +-------------------+-------------------------------+
+        | Value             |  Description                  |
+        +===================+===============================+
+        | "nistP521r1"      |  NIST P-521                   |
+        +-------------------+-------------------------------+
+        | "nistP256r1"      |  NIST P-256                   |
+        +-------------------+-------------------------------+
+        | "brainpoolP192r1" |  Brainpool P-192 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP192t1" |  Brainpool P-192 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256r1" |  Brainpool P-256 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256t1" |  Brainpool P-256 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384r1" |  Brainpool P-384 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384t1" |  Brainpool P-384 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512r1" |  Brainpool P-512 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512t1" |  Brainpool P-512 T1           |
+        +-------------------+-------------------------------+
+
+			
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     # get the EC class matching this curve name
     try:
         curve = ec._CURVE_TYPES[curve_name]
@@ -959,7 +1111,46 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
 
 
 def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
-    #TODO: need to put comments
+    ''' 
+        Build EC keys using parameters
+        
+        
+        :param str p: The private value
+
+        :param str x: The affine x component of the public point
+
+        :param str y: The affine y component of the public point 
+
+        :param str curve_name: the name of the curve. Possible curve names:
+
+        +-------------------+-------------------------------+
+        | Value             |  Description                  |
+        +===================+===============================+
+        | "nistP521r1"      |  NIST P-521                   |
+        +-------------------+-------------------------------+
+        | "nistP256r1"      |  NIST P-256                   |
+        +-------------------+-------------------------------+
+        | "brainpoolP192r1" |  Brainpool P-192 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP192t1" |  Brainpool P-192 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256r1" |  Brainpool P-256 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256t1" |  Brainpool P-256 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384r1" |  Brainpool P-384 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384t1" |  Brainpool P-384 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512r1" |  Brainpool P-512 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512t1" |  Brainpool P-512 T1           |
+        +-------------------+-------------------------------+
+
+			
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     import re
     # remove space if any
     p = ''.join( re.split( '\W+', p.upper() ) )
@@ -984,7 +1175,14 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
 
 
 def generate_DSA_keys(key_size = 1024 ):
-    #TODO: need to put comments
+    ''' 
+        DSA keys generation
+        
+        :param int key_size: the key size in bit (1024 by default).
+
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     # call the library key generation
     private_key = dsa.generate_private_key(key_size=key_size, backend=default_backend())
     public_key = private_key.public_key()
@@ -1011,7 +1209,22 @@ def generate_DSA_keys(key_size = 1024 ):
 
 
 def build_DSA_keys(p, q, g, public_key, private_key):
-    #TODO: need to put comments
+    ''' 
+        Build DSA keys using specific values
+
+        :param str p: the private key large_modulus 
+        
+        :param str q: The sub-group order. 
+
+        :param str g: The private key generator
+        
+        :param str public_key: the public value.
+        
+        :param str private_key: the private value.
+
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     import re
     # remove space if any
     p = ''.join( re.split( '\W+', p.upper() ) )
@@ -1031,7 +1244,16 @@ def build_DSA_keys(p, q, g, public_key, private_key):
 
 
 def generate_DH_keys(generator, key_size = 1024 ):
-    #TODO: need to put comments
+    ''' 
+        DH keys generation
+
+        :param str generator: The generator
+        
+        :param int key_size: the key size in bit (1024 by default).
+
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     # call the library key generation
     parameters = dh.generate_parameters(int(generator,16), key_size, backend=default_backend())
     private_key = parameters.generate_private_key()
@@ -1057,7 +1279,21 @@ def generate_DH_keys(generator, key_size = 1024 ):
 
 
 def build_DH_keys(p, g, private_key, public_key):
-    #TODO: need to put comments
+    ''' 
+        Build DH keys using specific values
+
+        :param str p: the private key modulus 
+        
+
+        :param str g: The private key generator
+        
+        :param str private_key: the private value.
+
+        :param str public_key: the public value.
+        
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
     import re
     # remove space if any
     p = ''.join( re.split( '\W+', p.upper() ) )
@@ -1077,7 +1313,16 @@ def build_DH_keys(p, g, private_key, public_key):
 
 
 def generate_DH_key_agreement(private_key, public_key ):
-    #TODO: need to put comments
+    ''' 
+        Performs a DH key aggrement.
+
+        :param str private_key: the private key object see :func:`build_DH_keys()` or :func:`generate_DH_keys()`
+
+        :param str public_key: the public key object see :func:`build_DH_keys()` or :func:`generate_DH_keys()`
+
+        :returns str data_ret: The agreed key
+ 
+    '''
     shared_secret = private_key.exchange(public_key) 
     return shared_secret
 
