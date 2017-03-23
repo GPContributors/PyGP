@@ -100,6 +100,8 @@ def last_status():
     return gp.last_status()
 
 
+
+
 def set_log_mode(loggingMode, file_path = None):
     """
         Manages the logging capabilities. 
@@ -170,6 +172,28 @@ def set_log_mode(loggingMode, file_path = None):
         gp.apdu_timing(True)
     else:     
         gp.apdu_timing(False)
+
+
+def set_payload_mode(activate):
+    """
+        Allows to store all apdu to send into a list in place of sending them to the card.
+        The list containing apdus could be retreive by using the :func get_payload_list
+
+        :param bool activate: Activate the payload mode
+
+    """
+    gp.set_payload_mode(activate)
+
+
+def get_payload_list():
+    """
+        Returns the list of payload apdu.
+
+        :returns: list payload_list: the list of apdu
+
+
+    """
+    return gp.get_payload_list()
 
 
 def echo(message, log_level=INFO_LEVEL):
@@ -586,9 +610,11 @@ def get_data(identifier):
         global cardInfo    
         global securityInfo  
         
-        error_status = gp.get_data(context, cardInfo, securityInfo, identifier)
+        error_status, rapdu = gp.get_data(context, cardInfo, securityInfo, identifier)
 
         __handle_error_status__(error_status, "get_data: ")  
+
+        return rapdu
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -690,7 +716,7 @@ def get_cplc():
                 logger.log_info('\tIC Personalization Equipment Identifier:    ' +  cplc_data[index: index + 8])
                 index = index + 8
         else:
-            logger.log_error("get_cplc error") 
+            pass
     except BaseException as e:
         logger.log_error(str(e))    
         raise      
@@ -852,15 +878,66 @@ def channel(logical_channel):
         raise
 
 
-<<<<<<< HEAD
-def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE ):
+def get_certificate(key_version_number, key_identifier):
+    """
+        Retrieves a CERT.SD.ECKA from the SD.
+        
+        :param str key_version_number: the key set version.
+        :param str key_identifier: the key identifier.
+
+        :returns str data_response: The response data containing the certificate.
+
+    """
+    try:
+        global context       
+        global cardInfo   
+        global securityInfo
+
+        # 1. perform the install command
+        error_status, rapdu =  gp.get_certificate(context, cardInfo, securityInfo, key_version_number, key_identifier)
+
+        __handle_error_status__(error_status, "get_certificate: ")  
+
+        return rapdu
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def perform_security_operation(key_version_number, key_identifier,certificate):
+    """
+        The PERFORM SECURITY OPERATION command is used to send the OCE certificate to the SD. 
+        This is required as a precondition to the initiation of an SCP11 secure channel.
+
+        :param str key_version_number: the key set version.
+        :param str key_identifier: the key identifier.
+        :param str certificate: The certificate data.
+
+    """
+    try:
+        global context       
+        global cardInfo   
+        global securityInfo
+
+        # 1. perform the install command 
+        error_status =  gp.perform_security_operation(context, cardInfo, securityInfo, key_version_number, key_identifier, certificate )
+
+        __handle_error_status__(error_status, "perform_security_operation: ")  
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE_ECKA ):
     """
         Performs an internal authenticate command using the specified parameters. 
 
         :param str key_version_number: the key set version.
         :param str key_identifier: the key identifier.
         :param str crt_data: The data for key establishment.
-        :param str ePK_OCE: The Ephemeral public key of the OCE used for key agreement
+        :param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
        
         
         :returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
@@ -872,20 +949,49 @@ def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE ):
         global securityInfo
 
         # 1. perform the internal authenticate command 
-        error_status, rapdu =  gp.internal_authenticate(context, cardInfo, key_version_number,  key_identifier, crt_data , ePK_OCE )
+        error_status, rapdu =  gp.internal_authenticate(context, cardInfo, key_version_number,  key_identifier, crt_data , ePK_OCE_ECKA )
 
         __handle_error_status__(error_status, "internal_auth: ")
 
-        return error_status, rapdu
+        
+        return rapdu
        
     except BaseException as e:
         logger.log_error(str(e))
         raise
 
 
-=======
->>>>>>> fbcad1a8a9a392b861b10cc13d06c5b56c2c5a04
-def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21'):
+def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
+    """
+    Performs an mutual authenticate command using the specified parameters. 
+
+    :param str key_version_number: the key set version.
+    :param str key_identifier: the key identifier.
+    :param str crt_data: The data for key establishment.
+    :param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
+    
+    
+    :returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
+
+    """
+    try:
+        global context       
+        global cardInfo   
+        global securityInfo
+
+        # 1. perform the internal authenticate command 
+        error_status, rapdu =  gp.mutual_authenticate(context, cardInfo, key_version_number,  key_identifier, crt_data , ePK_OCE_ECKA )
+
+        __handle_error_status__(error_status, "mutual_auth: ")
+
+        return rapdu
+       
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+        
+def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', sequence_counter = "000000"):
     """
         Performs an initializee update using specifiied key set and secure channel protocol.
 
@@ -895,6 +1001,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
         :param str ketsetversion: The Key Set version to used.
+        :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         
         :returns str hostCryptogram: The off card host cryptogram to use into the :func:`ext_auth()` function.
 
@@ -933,7 +1040,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi )
+        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi, sequence_counter )
         __handle_error_status__(error_status, "init_update: ")
         securityInfo = security_Info_template
 
@@ -977,7 +1084,8 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
         raise
 
 
-def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
+
+def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', sequence_counter = "000000", securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
         Performs a complete authentication with the card using the specifiied key set, secure channel protocol,and security level for secure messaging.
 
@@ -987,6 +1095,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
         :param str ketsetversion: The Key Set version to used.
+        :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         :param int securitylevel: The security level of the secure messaging. Could be:
         
             * SECURITY_LEVEL_NO_SECURE_MESSAGING          (0x00): No secure messaging expected.
@@ -1034,7 +1143,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi )
+        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi , sequence_counter)
         __handle_error_status__(error_status, "auth: ")
         securityInfo = security_Info_template
 
@@ -1342,11 +1451,12 @@ def delete_key(key_version_number, key_identifier):
         raise
 
 
-def send(apdu):
+def send(apdu, raw_mode = False):
     '''
         Sends an APDU Command according to the security level of the selected Security Domain
 
         :param str apdu: The apdu command.
+        :param bool raw_mode: If True apdu is sent without security level management.
     '''
     try:
         global context       
@@ -1355,7 +1465,7 @@ def send(apdu):
         global key_list    
         global securityInfo    
 
-        error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu)
+        error_status, rapdu =  gp.send_APDU(context, cardInfo, securityInfo, apdu, raw_mode)
 
         __handle_error_status__(error_status, "send: ")
 
