@@ -1,12 +1,34 @@
 import collections
 
 def remove_space(bytestring):
-    # remove space if any
+    """
+        Removes all whitespace characters of a string.
+
+        :param str bytestring: The string to manage
+
+        :returns: str bytestr: the string without whitepace characters
+
+    """
     import re
     bytestring = ''.join( re.split( '\W+', bytestring.upper() ) )
     return bytestring
 
 def toByteArray(byteString):
+    """
+        Returns a list of bytes from a byte string
+        
+        :param str bytestring: a hexadecimal string
+
+        :returns: list list_byte: the list of bytes
+
+        ::
+
+            # get the list of bytes from the hexadecimal string
+            astr = "3B65000  09C11 0101 03"
+            toByteArray( astr ) # returns  [ 0x3B, 0x65, 0x00, 0x00, 0x9C, 0x11, 0x01, 0x01, 0x03 ]
+
+        
+    """
     import re
     packedstring = ''.join( re.split( '\W+', byteString.upper() ) )
     aArray = bytearray.fromhex(packedstring.upper())
@@ -14,7 +36,20 @@ def toByteArray(byteString):
     return value
 
 def toHexString(bytes=[]):
+    """
+        Returns a hexadecimal string from a list of bytes
+        
+        :param list bytes: a list of bytes
 
+        :returns: str bytestr: the hexadecimal string 
+
+        ::
+
+            # get the string from the list of bytes
+            a_list = [ 0x3B, 0x65, 0x00, 0x00, 0x9C, 0x11, 0x01, 0x01, 0x03 ]
+            toHexString( a_list ) # returns  "3B6500009C11010103"
+        
+    """
     value = ""
     for i in range (0, len(bytes)):
         if (bytes[i] < 0x00):
@@ -24,7 +59,23 @@ def toHexString(bytes=[]):
 
 
 def getBytes(data, byteNumber,length = 1):
-    ''' return the part of data string from byte number to length bytes '''
+    """
+        Returns the part of data string from byte number to length bytes
+        
+        :param str data: a hexadecimal string
+        :param int byteNumber: the start offset into the string
+        :param int length: The bytes length to get
+
+        :returns: str bytestr: the hexadecimal string 
+
+        ::
+
+            # get the string from byte 2 with a length of 3
+            astr = "3B65000  09C11 0101 03"
+            getBytes(astr, 2, 3) # returns  "650000"
+        
+    """
+
     import re
     bytestr = ''.join( re.split( '\W+', data.upper() ) )
     byteArray = toByteArray(bytestr)
@@ -33,9 +84,20 @@ def getBytes(data, byteNumber,length = 1):
 
 def lv(bytestring):
     '''
-    Return a byte String representing the length content preceding by its length
+        Returns a byte String representing the length content preceding by its length.
 
-    for byte string up to FF bytes, the length is coded with 2 bytes
+        :param str bytestring: a hexadecimal string
+
+        :returns: str bytestr: the hexadecimal string preceded by its length 
+        
+        .. note:: for byte string up to FF bytes, the length is coded with 2 bytes.
+
+        ::
+
+            # get the string preceded by its length
+            astr = "3B65000  09C11 0101 03"
+            lv(astr) # returns  "093B65000 09C11010103"
+        
 
     '''
     import re
@@ -50,24 +112,98 @@ def lv(bytestring):
 
 
 def intToHexString(intValue, len = 1):
-    """Returns an hex string representing an integer """
+    """
+        Returns a hexadecimal string representing an integer
+        
+        :param int intValue: an integer value
+        :param int len: the number of byte expected for the string
+
+        :returns: str bytestr: the hexadecimal string 
+
+
+        ::
+
+            # get the string representation of the integer
+            aInt = 0x03
+            intToHexString ( aInt, 2 ) #returns  "0003"
+            
+
+    """
     stringValue = hex(intValue).lstrip('0x')
     stringValue = stringValue.rjust(len*2,'0')
     return stringValue.upper()
 
 
-def getLength(bytestr, numberOfBytes = 1):
+def getLength(bytestr, len = 1):
     '''
-        return a string representing the length of the string as parameter on numberOfBytes bytes
+        Returns a string representing the length of the string as parameter on numberOfBytes bytes
+
+        :param str bytestr: a hexadecimal string
+        :param int len: the number of byte expected for the string
         
         ::
-            getLengthOfHexaString("A0A40002", 2) -> "0004"
-            getLengthOfHexaString("A0A40002", 1) -> "02"
+
+            getLength("A0A40002", 2) # returns "0004"
+            getLength("A0A40002", 1) # returns "02"
+
+            
     '''
     import re
     bytestr = ''.join( re.split( '\W+', bytestr.upper() ) )
     length = int(len(bytestr)/2)
-    return intToHexString(length,numberOfBytes)
+    return intToHexString(length,len)
+
+
+
+def increment(bytestr,value):
+    '''
+        This function increments an hexadecimal string with the integer value.
+        The value could be an integer or a string.
+    
+        :param str bytestr: a hexadecimal string
+        :param int value: the value to increment
+
+
+        ::
+
+            aStr = '01'
+            aInt = 0x03
+            newStr = increment ( aStr, aInt ) # returns  "04"
+            aInt = '03'
+            newStr = increment ( aStr, aInt ) # returns  "04"
+
+
+    '''
+    import re
+    data = ''.join( re.split( '\W+', bytestr.upper() ) )
+    # value is an integer
+    if type(value) is int:
+        # addition
+        data_value = int(data, 16)
+        data_value = data_value + value
+        tmp_string = intToHexString(data_value)
+        # return value on the same length
+        while len(tmp_string) < len(data) :
+            tmp_string = '00' + tmp_string
+
+    # value is a string
+    elif type(value) is str:
+        #remove space
+        value = ''.join( re.split( '\W+', value.upper() ) )
+        # addition
+        data_value = int(data, 16)
+        value = int(value, 16)
+        data_value = data_value + value
+        tmp_string = intToHexString(data_value)
+        # return value on the same length
+        while len(tmp_string) < len(data) or len(tmp_string) < len(value) :
+            tmp_string = '00' + tmp_string
+
+    else:
+        raise BaseException("Wrong parameter type")
+
+    return tmp_string
+
 
 def tlv_read(byteString):
     
