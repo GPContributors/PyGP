@@ -1,9 +1,7 @@
 from pygp import *
 import logging
-
-
-
-
+import unicodedata
+import string
 
 # create the global logger
 logger = logging.getLogger()
@@ -99,18 +97,36 @@ def log_apdu(direction, byte_list_apdu):
         global logger
         # format the capdu into 16 bytes long blocks
         j = 0
+        multi_line = False
+        ascii_str = ""
+
         if direction == 1:
             message = "==> "
         else:
             message = "<== "
-        for i in range(0,len(byte_list_apdu)):
+        
+        apdu_length = len(byte_list_apdu)
+        for i in range(0, apdu_length):
             message += ("%-0.2X " % byte_list_apdu[i])
+            ascii_str += chr(byte_list_apdu[i])
             j = j + 1
-            if j== 16:
-                message+="\n    "
+            if j == 16 and apdu_length > (i+1):
+                multi_line = True
+                message += "\t\t" + extract_readable_str(ascii_str) + "\n    "
+                ascii_str = ""
                 j = 0
 
+        if multi_line == False:
+            if apdu_length != 16:
+                message += ' ' * ( ((16*2) + 15) - (apdu_length*2 + (apdu_length - 1)) )
+            message += "\t\t" + extract_readable_str(ascii_str)
+        elif multi_line == True and ascii_str != "":
+            if (apdu_length%16) != 0:
+                message += ' ' * ( ((16*2) + 15) - ((apdu_length%16)*2 + (apdu_length%16 -1)) )
+            message += "\t\t" + extract_readable_str(ascii_str)
+
         logger.info(message)
+
 
 def log_management_apdu(direction, byte_list_apdu):
     ''' log with info level
@@ -124,12 +140,23 @@ def log_management_apdu(direction, byte_list_apdu):
             message = "\t\t--> "
         else:
             message = "\t\t<-- "
-        for i in range(0,len(byte_list_apdu)):
+        for i in range(0, len(byte_list_apdu)):
             message += ("%-0.2X " % byte_list_apdu[i])
             j = j + 1
-            if j== 16:
+            if j == 16 and len(byte_list_apdu) > (i+1):
                 message+="\n\t\t    "
                 j = 0
 
         logger.info(message)
 
+
+def extract_readable_str(data):
+    # this will convert and extract readable string from APDU command
+    printable = string.ascii_letters + string.hexdigits
+    out = ""
+    for x in unicodedata.normalize('NFKD', data):
+        if x in printable:
+            out += x
+        elif x not in string.whitespace:
+            out += "."
+    return out
