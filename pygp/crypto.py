@@ -239,7 +239,7 @@ def Remove_ISO_9797_M2_Padding(data ):
         return data
     else:
         # remove the last byte
-        offset = offset - 1
+        #offset = offset - 1
         return toHexString(data_bytes[0:offset])
 
 

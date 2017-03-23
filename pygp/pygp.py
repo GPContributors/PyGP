@@ -798,7 +798,7 @@ def get_status_applications():
         raise
 
 
-def get_status_executable_load_file():
+def get_status_executable_load_files():
     """
         Get the AID and the life cycle state of all executable load files and log it through the logger.
     
@@ -980,7 +980,7 @@ def manage_channel(open_channel, logical_channel = None):
         raise
 
 def get_certificate(key_version_number, key_identifier):    
-	"""
+    """
         Retrieves a CERT.SD.ECKA from the SD.
         
         :param str key_version_number: the key set version.

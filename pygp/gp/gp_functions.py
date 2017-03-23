@@ -432,11 +432,9 @@ def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False):
 
 def select_issuerSecurityDomain(card_context, card_info):
     
-<<<<<<< .mine
-    global current_selected_aid
-=======
 
->>>>>>> .theirs
+    global current_selected_aid
+
     log_start("select_issuerSecurityDomain")
 
     capdu = "00 A4 04 00 00"
@@ -844,12 +842,12 @@ def get_status(card_context, card_info, security_info, card_element):
                 for app_info in app_info_tlv_list:
                     if app_info.getTAG() == '4F':
                         app_aid = app_info.getValue()
-                elif app_info.getTAG() == '9F70':
-                        app_lifecycle = app_info.getValue()
-                elif app_info.getTAG() == 'C5':
-                        app_privileges = app_info.getValue()
-                elif app_info.getTAG() == '84':
-                        app_modules_aid = app_info.getValue()
+                    elif app_info.getTAG() == '9F70':
+                            app_lifecycle = app_info.getValue()
+                    elif app_info.getTAG() == 'C5':
+                            app_privileges = app_info.getValue()
+                    elif app_info.getTAG() == '84':
+                            app_modules_aid = app_info.getValue()
                 app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
     else:
         app_info_list = None
@@ -1065,12 +1063,12 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
             scp = keyInformationData[1]
         
         # test if reported SCP is consistent with passed SCP
-        if scp != keyInformationData[1]:
+        if int(scp, 16) != keyInformationData[1]:
             error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
             return error_status, None, None
         
         # update the security information structure
-        securityInfo['secureChannelProtocol'] = scp
+        securityInfo['secureChannelProtocol'] = int(scp, 16)
 
     
         # in SCP03 the scp implementation value is returned by the init update response
