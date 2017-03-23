@@ -31,8 +31,8 @@ class TLV:
 		else:
 			self.extended = False
 
-		self.type = (data[i]&0b00100000)>>5		
-	
+		self.type = (data[i]&0b00100000)>>5
+
 		if self.extended:
 			self.tag = 256 * data[i] + data[i+1]
 			i += 2
@@ -55,7 +55,7 @@ class TLV:
 			self.value = data[i:i+self.length]
 			i += self.length
 
-			if self.type == TAG_TYPE_CONSTRUCTED:
+			if self.type == TAG_TYPE_CONSTRUCTED and self.length == len(self.value):
 				j = 0
 				while j < self.length:
 					tlv = TLV(self.value[j:])

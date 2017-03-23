@@ -443,7 +443,8 @@ def card():
         __handle_error_status__(error_status)
         
         # return ATR information
-        atr = conn.getATR(context,cardInfo)
+        atr = conn.getATR(context, cardInfo)
+        logger.log_info("ATR : %s" %atr)
 
         # select ISD
         select_isd()
@@ -475,7 +476,8 @@ def atr():
         __handle_error_status__(error_status)
         
         # return ATR information
-        atr = conn.getATR(context,cardInfo)
+        atr = conn.getATR(context, cardInfo)
+        logger.log_info("ATR : %s" %atr)
 
         return atr
 
@@ -566,6 +568,30 @@ def set_status(cardElement, lifeCycleState, aid):
         error_status = gp.set_status(context, cardInfo, securityInfo, cardElement, lifeCycleState, aid)
 
         __handle_error_status__(error_status, "set_status: ")
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def set_crs_status(status_type, status_value, aid):
+    """
+        Modifies the card Life Cycle State or the Application Life Cycle State.
+        
+        :param str status_type: Type of information shall be updated. (i.e. availability, priority order, etc.)
+        :param str status_value: Updating value depends on the status type in 'status_type'
+        :param str aid: the AID of the target CRS Application.
+
+    """
+    try:
+        global context    
+        global cardInfo    
+        global readername    
+        global securityInfo    
+
+        error_status, app_info_list = gp.set_status(context, cardInfo, securityInfo, status_type, status_value, aid)
+
+        __handle_error_status__(error_status, "set_crs_status: ")
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -856,6 +882,61 @@ def ls():
         raise
 
 
+def get_crs_status(aid = None, tag_list = None):
+    """
+        Retrieves the CRS registered Contactless Applications display information, 
+        the Lifecycle status and other information according to the given match/search criteria.
+
+        :param str aid: search criterion AID, if empty it will search previously selected CRS Application recursively.
+        :param str tag_list: Indicates to the CRS Application how to construct the response data for matching search criteria.
+
+    """
+    try:
+        global context       
+        global cardInfo   
+        global securityInfo
+
+        if aid == None: aid = '' 
+        if tag_list == None: tag_list = '' 
+            
+
+        # 1. perform the command 
+        error_status, app_info_list =  gp.get_crs_status(context, cardInfo, securityInfo, aid, tag_list)
+
+        __handle_error_status__(error_status, "get_crs_status: ")
+        if app_info_list != None:
+            for app_info in app_info_list:
+                logger.log_info("Application AID : %s (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']]))
+                if app_info['app update counter'] != '':
+                    logger.log_info("\tApplication Update Counter : %s " % (app_info['app update counter'].upper()))
+                if app_info['selection priority'] != '':
+                    logger.log_info("\tSelection Priority : %s " % (app_info['selection priority'].upper()))
+                if app_info['app group head'] != '':
+                    logger.log_info("\tApplication Group Head : %s " % (app_info['app group head'].upper()))
+                if app_info['app group members'] != '':
+                    logger.log_info("\tApplication Group Member : %s " % (app_info['app group members'].upper()))
+                if app_info['crel app list'] != '':
+                    logger.log_info("\tCREL Application AID : %s " % (app_info['crel app list'].upper()))
+                if app_info['policy restricted app'] != '':
+                    logger.log_info("\tPolicy Restricted Application : %s " % (app_info['policy restricted app'].upper()))
+                if app_info['app discretionary data'] != '':
+                    logger.log_info("\tApplication discretionary data : %s " % (app_info['app discretionary data'].upper()))
+                if app_info['app family'] != '':
+                    logger.log_info("\tApplication Family : %s " % (app_info['app family'].upper()))
+                if app_info['display required indicator'] != '':
+                    logger.log_info("\tDisplay Required Indicator : %s " % (app_info['display required indicator'].upper()))
+                if app_info['assinged protocol'] != '':
+                    logger.log_info("\tAssigned Protocol for Implicit Selection : %s " % (app_info['assinged protocol'].upper()))
+                if app_info['continuous processing'] != '':
+                    logger.log_info("\tContinuous Processing : %s " % (app_info['continuous processing'].upper()))
+                if app_info['recognition algorithm'] != '':
+                    logger.log_info("\tRecognition Algorithm for Implicit Selection : %s " % (app_info['recognition algorithm'].upper()))
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
 def channel(logical_channel):
     """
         Selects the logical channel to use.
@@ -878,8 +959,28 @@ def channel(logical_channel):
         raise
 
 
-def get_certificate(key_version_number, key_identifier):
+def manage_channel(open_channel, logical_channel = None):
     """
+        Uses to open or close supplementaty logical channels.
+
+        :param boolean open_channel: wether open/close the channel. True means to open and False to close the channel.
+        :param int logical_channel: The Logical channel number (0..3) to open/close.
+
+    """
+    try:
+        global context
+        global cardInfo
+
+        error_status, rapdu = gp.manage_channel(context, cardInfo, open_channel, logical_channel)
+
+        __handle_error_status__(error_status, "manage_channel: ")
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+def get_certificate(key_version_number, key_identifier):    
+	"""
         Retrieves a CERT.SD.ECKA from the SD.
         
         :param str key_version_number: the key set version.
@@ -963,15 +1064,15 @@ def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE_ECKA ):
 
 def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
     """
-    Performs an mutual authenticate command using the specified parameters. 
+		Performs an mutual authenticate command using the specified parameters. 
 
-    :param str key_version_number: the key set version.
-    :param str key_identifier: the key identifier.
-    :param str crt_data: The data for key establishment.
-    :param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
-    
-    
-    :returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
+		:param str key_version_number: the key set version.
+		:param str key_identifier: the key identifier.
+		:param str crt_data: The data for key establishment.
+		:param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
+		
+		
+		:returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
 
     """
     try:
@@ -998,8 +1099,8 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
-        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
-        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
+        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returned by the card is used.
+        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returned by the card is used.
         :param str ketsetversion: The Key Set version to used.
         :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         
@@ -1092,8 +1193,8 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
-        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returns by the card is used.
-        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returns by the card is used.
+        :param str scp: The Session Channel Protocol to used. If None (default) the SCP returned by the card is used.
+        :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returned by the card is used.
         :param str ketsetversion: The Key Set version to used.
         :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         :param int securitylevel: The security level of the secure messaging. Could be:

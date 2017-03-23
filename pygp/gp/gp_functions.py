@@ -77,12 +77,10 @@ def select_channel(card_context, card_info, logical_channel):
     return error_status
 
 
-
 def wrap_command(security_info, capdu):
     ''' Wrap APDU according to the security info '''
     #TODO: update doc
     
-
     log_start("wrap_command")
 
     # no security level defined, just return
@@ -200,9 +198,7 @@ def wrap_command(security_info, capdu):
                 # create the status error structure
                 error_status = create_error_status(ERROR_UNRECOGNIZED_APDU_COMMAND, runtimeErrorDict[ERROR_UNRECOGNIZED_APDU_COMMAND])
                 return error_status, None
-
         
-
     # ICV encryption
     iv = None
     if security_info['secureChannelProtocol'] == GP_SCP02:
@@ -215,13 +211,10 @@ def wrap_command(security_info, capdu):
 
                 iv = encipher_iv_SCP02(security_info['lastC_MAC'], security_info['C_MACSessionKey'][:16])
                 
-                
-
     elif(security_info['secureChannelProtocol']== GP_SCP03):
         iv = crypto.ISO_9797_M1_Padding_left(intToHexString(security_info['icv_counter'],2), 16)
         iv = encipher_iv_SCP03(iv, security_info['encryptionSessionKey'])
         
-   
     else:
         error_status = create_error_status(ERROR_INVALID_SCP_IMPL, runtimeErrorDict[ERROR_INVALID_SCP_IMPL])
         log_end("wrap_command")
@@ -243,7 +236,6 @@ def wrap_command(security_info, capdu):
             encData = encipher_data_SCP02(toHexString(apdu_data_field), security_info['encryptionSessionKey'] , crypto.ICV_NULL_8)
             encData = toByteArray(encData) # type mismatch
             
-
             log_debug("wrap_command: encrypted data field: %s" %toHexString(encData))
         
         elif(security_info['secureChannelProtocol']== GP_SCP03):
@@ -254,14 +246,11 @@ def wrap_command(security_info, capdu):
             apdu_to_wrap[4] = len(encData) + 8 # enc data 
             
             
-    
     # MAC calculation
     if security_info['secureChannelProtocol'] == GP_SCP02:
         mac = calculate_mac_SCP02(toHexString(apdu_to_wrap), security_info['C_MACSessionKey'], iv)
         # re put lc with the length of the encipher data
         apdu_to_wrap[4] = len(encData) + 8# enc data 
-            
-
     elif(security_info['secureChannelProtocol']== GP_SCP03):
         mac = calculate_mac_SCP03(toHexString(apdu_to_wrap[:5]) + toHexString(encData), security_info['C_MACSessionKey'], security_info['lastC_MAC'])
         pass
@@ -281,15 +270,12 @@ def wrap_command(security_info, capdu):
     # create the wrapped APDU
     if security_info['secureChannelProtocol'] == GP_SCP02:
         wrappedAPDU = toHexString( apdu_to_wrap[:5]) + toHexString(encData) + mac
-    
 
     elif(security_info['secureChannelProtocol'] == GP_SCP03):
         wrappedAPDU = toHexString( apdu_to_wrap[:5]) + toHexString(encData) + mac[:16]
         # don't forget tp update the counter for ICV_NULL_8
         log_debug("wrap_command: current ICV counter: %s" %intToHexString(security_info['icv_counter'] ,2))
         security_info['icv_counter'] = security_info['icv_counter'] + 1
-        
-       
 
     else:
         error_status = create_error_status(ERROR_INVALID_SCP_IMPL, runtimeErrorDict[ERROR_INVALID_SCP_IMPL])
@@ -312,7 +298,6 @@ def unwrap_command(security_info, rapdu):
     ''' unwrap APDU response according to the security info '''
     #TODO: update doc
    
-
     log_start("unwrap_command")
     error_status = create_no_error_status(ERROR_STATUS_SUCCESS)
 
@@ -340,7 +325,6 @@ def unwrap_command(security_info, rapdu):
             return error_status, rapdu
         #TODO
     
-
     elif(security_info['secureChannelProtocol'] == GP_SCP03):
         # only status word so no RMAC
         if len(bytelist_rapdu) == 2:
@@ -380,10 +364,7 @@ def unwrap_command(security_info, rapdu):
                     pass
                 else:
                     return error_status, toHexString(bytelist_rapdu)
-
-
        
-
     else:
         error_status = create_error_status(ERROR_INVALID_SCP_IMPL, runtimeErrorDict[ERROR_INVALID_SCP_IMPL])
         log_end("unwrap_command")
@@ -451,7 +432,11 @@ def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False):
 
 def select_issuerSecurityDomain(card_context, card_info):
     
+<<<<<<< .mine
     global current_selected_aid
+=======
+
+>>>>>>> .theirs
     log_start("select_issuerSecurityDomain")
 
     capdu = "00 A4 04 00 00"
@@ -483,9 +468,12 @@ def select_issuerSecurityDomain(card_context, card_info):
     
     return error_status
 
+
 def select_application(card_context, card_info, str_AID):
     
+
     global current_selected_aid
+
     log_start("select_application")
 
     capdu = "00 A4 04 00 " + lv (str_AID)
@@ -497,6 +485,8 @@ def select_application(card_context, card_info, str_AID):
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
         return error_status
+
+    log_end("select_application", error_status['errorStatus'])
     
     if payload_mode_activated == False:
         # no error so the application is selected. now store its aid
@@ -515,6 +505,7 @@ def select_application(card_context, card_info, str_AID):
    
     return error_status
 
+
 def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleState, aid):
     
     log_start("set_status")
@@ -522,7 +513,7 @@ def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleStat
     import re
     aid = ''.join( re.split( '\W+', aid.upper() ) )
 
-    capdu = "80 F0 " + cardElement + lifeCycleState + + lv (aid)
+    capdu = "80 F0 " + cardElement + lifeCycleState + lv (aid)
     
     #TODO: check context ?
 
@@ -532,11 +523,37 @@ def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleStat
         log_end("set_status", error_status['errorStatus'])
         return error_status
    
+    log_end("set_status", error_status['errorStatus'])
+   
     return error_status
+
+
+def set_crs_status(card_context, card_info, securityInfo, status_type, status_value, aid):
+    
+    log_start("set_crs_status")
+    # supress blank if any
+    import re
+    aid = ''.join( re.split( '\W+', aid.upper() ) )
+
+    capdu = "80 F0 " + status_type + status_value + "4F" + lv(aid)
+    
+    #TODO: check context ?
+
+    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+
+    if error_status['errorStatus'] != 0x00:
+        log_end("set_crs_status", error_status['errorStatus'])
+        return error_status, None
+    
+    log_end("set_crs_status", error_status['errorStatus'])
+
+    #TODO: needs to parse the response data based on the GP Amdt.C Table 3-23
+    
+    return error_status, rapdu
+
 
 def delete_application(card_context, card_info, securityInfo,  str_AID):
     
-
     log_start("delete_application")
 
     capdu = "80 E4 00 00 " + lv ('4F' + lv(str_AID))
@@ -548,12 +565,14 @@ def delete_application(card_context, card_info, securityInfo,  str_AID):
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
         return error_status
+
+    log_end("select_application", error_status['errorStatus'])
    
     return error_status
 
+
 def delete_package(card_context, card_info, securityInfo,  str_AID):
     
-
     log_start("delete_package")
 
     capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
@@ -566,14 +585,16 @@ def delete_package(card_context, card_info, securityInfo,  str_AID):
         log_end("delete_package", error_status['errorStatus'])
         return error_status
    
+    log_end("delete_package", error_status['errorStatus'])
+
     return error_status
+
 
 def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionNumber):
     
-
     log_start("delete_key")
 
-    capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + + lv('D2' + lv(keyVersionNumber))
+    capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + lv('D2' + lv(keyVersionNumber))
     
     #TODO: check context ?
 
@@ -583,17 +604,17 @@ def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionN
         log_end("delete_key", error_status['errorStatus'])
         return error_status
    
+    log_end("delete_key", error_status['errorStatus'])
+
     return error_status
+
 
 def get_cplc_data(card_context, card_info, security_info):
     
-   
     log_start("get_cplc_data")
 
-   
     capdu = "80 CA 9F 7F 00"
     
-
     error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
 
     if error_status['errorStatus'] != 0x00:
@@ -619,13 +640,10 @@ def get_cplc_data(card_context, card_info, security_info):
 
 def get_key_information_template(card_context, card_info, security_info):
     
-   
     log_start("get_key_information_template")
 
-   
     capdu = "80 CA 00 E0 00"
     
-
     error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
 
     if error_status['errorStatus'] != 0x00:
@@ -688,11 +706,10 @@ def get_key_information_template(card_context, card_info, security_info):
                         index = index + 2 
                         keyInformation.append((KeyIdentifier, KeyVersionNumber, KeyLength, KeyType))
 
-
-
     else:
         keyInformation = []
     
+
     log_end("get_key_information_template", error_status['errorStatus'])
 
     return error_status, keyInformation
@@ -743,10 +760,8 @@ def store_data(card_context, card_info, security_info, data):
     return error_status
 
 
-
 def get_data(card_context, card_info, security_info, identifier):
     
-  
     log_start("get_data")
 
     # build the APDU
@@ -782,7 +797,6 @@ def get_data(card_context, card_info, security_info, identifier):
 
 def get_status(card_context, card_info, security_info, card_element):
     
-  
     log_start("get_status")
 
     # build the APDU
@@ -830,16 +844,13 @@ def get_status(card_context, card_info, security_info, card_element):
                 for app_info in app_info_tlv_list:
                     if app_info.getTAG() == '4F':
                         app_aid = app_info.getValue()
-                    if app_info.getTAG() == '9F70':
+                elif app_info.getTAG() == '9F70':
                         app_lifecycle = app_info.getValue()
-                    if app_info.getTAG() == 'C5':
+                elif app_info.getTAG() == 'C5':
                         app_privileges = app_info.getValue()
-                    if app_info.getTAG() == '84':
+                elif app_info.getTAG() == '84':
                         app_modules_aid = app_info.getValue()
                 app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
-            
-
-
     else:
         app_info_list = None
         error_status = create_no_error_status(0x00)
@@ -849,7 +860,128 @@ def get_status(card_context, card_info, security_info, card_element):
 
     return error_status, app_info_list
 
+
+
+def get_crs_status(card_context, card_info, security_info, aid, tag_list):
+    
+    log_start("get_crs_status")
+
+    # build data field tag with given aid and tag list
+    if aid == '': data_field = "4F00"
+    else: data_field = "4F" + lv(aid)
+
+    if tag_list == '': pass
+    else: data_field = data_field + "5C" + lv(tag_list)
+    
+    capdu = "80 F2 40 00 " + lv(data_field) + "00"
+    
+    #TODO: check context ?
+
+    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    
+    if error_status['errorStatus'] != 0x00:
+        log_end("get_crs_status", error_status['errorStatus'])
+        return error_status, None
+    
+    # store the response
+    card_response = last_response()
+    # check if more data available
+    while last_status() == '6310':
+        # send a get status next occurence
+        capdu = "80 F2 40 01 " + lv(data_field) + "00"
+        error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    
+        if error_status['errorStatus'] != 0x00:
+            log_end("get_crs_status", error_status['errorStatus'])
+            return error_status, None
+        
+        card_response = card_response + last_response()
+    
+    # we have the card_response TLV. create the get status response dictionnary
+    response_tlvs = TLVs(toByteArray(card_response))
+    app_info_list = []
+    app_aid = None
+    app_lifecycle = None
+    uniform_resource_locator = None
+    app_image_template = None
+    display_message = None
+    app_update_counter = None
+    selection_priority = None
+    app_group_head = None
+    app_group_members = None
+    crel_application_aid_list = None
+    policy_restricted_app = None
+    app_discretionary_data = None
+    application_family = None
+    display_required_indicator = None
+    assinged_protocol = None
+    continuous_processing = None
+    recognition_algorithm = None
+
+
+    for response_tlv in response_tlvs.list_childs_tlv():
+        if response_tlv.getTAG() == '61':
+            # manage the list of TLV into this response_tlv
+            app_info_tlv_list = response_tlv.list_childs_tlv()
+            for app_info in app_info_tlv_list:
+                if app_info.getTAG() == '4F': app_aid = app_info.getValue()
+                elif app_info.getTAG() == '9F70': app_lifecycle = app_info.getValue()
+                elif app_info.getTAG() == '7F20':
+                    display_control_tlv_list = app_info.list_childs_tlv()
+                    for display_control_info in display_control_tlv_list:
+                        if display_control_info.getTAG() == '5F50': 
+                            uniform_resource_locator = display_control_info.getValue()
+                        elif display_control_info.getTAG() == '6D': 
+                            app_image_template = display_control_info.getValue()
+                        elif display_control_info.getTAG() == '5F45': 
+                            display_message = display_control_info.getValue()
+                elif app_info.getTAG() == '80': app_update_counter = app_info.getValue()
+                elif app_info.getTAG() == '81': selection_priority = app_info.getValue()
+                elif app_info.getTAG() == 'A2':
+                    app_group_head_tlv_list = app_info.list_childs_tlv()
+                    for app_group_head in app_group_head_tlv_list:
+                        if app_group_head.getTAG() == '4F': 
+                            app_group_head = app_group_head.getValue()
+                # below 3 parameters tag 'A3' to 'A5' can be multiple so need to find a better way to handle
+                elif app_info.getTAG() == 'A3':
+                    app_group_members_tlv_list = app_info.list_childs_tlv()
+                    for app_group_info in app_group_members_tlv_list:
+                        if app_group_info.getTAG() == '4F': 
+                            app_group_members = app_group_info.getValue()
+                elif app_info.getTAG() == 'A4':
+                    crel_app_aid_list_tlv_list = app_info.list_childs_tlv()
+                    for crel_app_aid_info in crel_app_aid_list_tlv_list:
+                        if crel_app_aid_info.getTAG() == '4F': 
+                            crel_app_aid_list = crel_app_aid_info.getValue()
+                elif app_info.getTAG() == 'A5':
+                    policy_restricted_app_tlv_list = app_info.list_childs_tlv()
+                    for policy_restricted_app_info in policy_restricted_app_tlv_list:
+                        if policy_restricted_app_info.getTAG() == '4F': 
+                            policy_restricted_app = policy_restricted_app_info.getValue()
+                elif app_info.getTAG() == 'A6': app_discretionary_data = app_info.getValue()
+                elif app_info.getTAG() == '87': app_family = app_info.getValue()
+                elif app_info.getTAG() == '88': display_required_indicator = app_info.getValue()
+                elif app_info.getTAG() == '8C': assinged_protocol = app_info.getValue()
+                elif app_info.getTAG() == '8A': continuous_processing = app_info.getValue()
+                elif app_info.getTAG() == '8B': recognition_algorithm = app_info.getValue()
+            app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], \
+                    'app update counter':app_update_counter, 'selection priority':selection_priority, \
+                    'app group head':app_group_head, 'app group members':app_group_members, \
+                    'crel app list':crel_app_aid_list, 'policy restricted app':policy_restricted_app, \
+                    'app discretionary data':app_discretionary_data, 'app family':app_family, \
+                    'display required indicator':display_required_indicator, 'assinged protocol':assinged_protocol, \
+                    'continuous processing':continuous_processing, 'recognition algorithm':recognition_algorithm})
+    
+    else:
+        error_status = create_no_error_status(0x00)
+
+    log_end("get_crs_status", error_status['errorStatus'])
+
+    return error_status, app_info_list
+
+
 def initialize_update(card_context, card_info, key_set_version , base_key, enc_key , mac_key , dek_key , scp, scp_implementation, sequence_counter = "000000" ):
+
         
     global last_apdu_response
     global last_apdu_status
@@ -869,9 +1001,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
     if error_status['errorStatus'] != 0x00:
         log_end("initialize_update", error_status['errorStatus'])
         return error_status, None, None
-
     
-
    
     # creation of the security info structure needed for all GP operations
     securityInfo = {}
@@ -962,9 +1092,6 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
                     error_status = create_error_status(ERROR_INVALID_SCP_IMPL, runtimeErrorDict[ERROR_INVALID_SCP_IMPL])
                     return error_status, None, None
             
-
-
-
         securityInfo['secureChannelProtocolImpl'] = scp_implementation
         securityInfo['keySetVersion'] = keyInformationData[0]
         # we set it to a dummy value
@@ -1010,8 +1137,6 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
             securityInfo['R_MACSessionKey'] = create_session_key_SCP02(baseKey, KRMAC_TYPE, toHexString(sequenceCounter))
             #calculation of data encryption session key
             securityInfo['dataEncryptionSessionKey'] = create_session_key_SCP02(baseKey, KDEK_TYPE, toHexString(sequenceCounter))
-
-
             
         ## 3 Secure Channel Keys */
         elif (securityInfo['secureChannelProtocolImpl']  == SCP02_IMPL_i05 or
@@ -1074,14 +1199,10 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
         error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
         return error_status, None, None
 
-    
-    #ifdef OPGP_DEBUG
     log_debug("initialize_update: S-ENC Session Key: %s" %securityInfo['encryptionSessionKey'])
     log_debug("initialize_update: S-MAC Session Key: %s" %securityInfo['C_MACSessionKey'])
     log_debug("initialize_update:   DEK Session Key: %s" %securityInfo['dataEncryptionSessionKey'])
     log_debug("initialize_update: R-MAC Session Key: %s" %securityInfo['R_MACSessionKey'])
-
-
 
     if securityInfo['secureChannelProtocol'] == GP_SCP02:
         offcardCryptogram = calculate_card_cryptogram_SCP02(toHexString(sequenceCounter), toHexString(cardChallenge), hostChallenge, securityInfo['encryptionSessionKey'])
@@ -1162,7 +1283,6 @@ def mutual_authenticate(card_context, card_info, key_version_number, key_identif
     return error_status, rapdu
 
 def external_authenticate(card_context, card_info, security_info, security_level, host_cryptogram):
-
 
     log_start("external_authenticate")
 
@@ -1324,8 +1444,6 @@ def install_install(card_context, card_info, security_info, make_selectable, exe
     else:
         install_apdu = '80 E6 04 00'  + lv(install_apdu_data + lv(parameter_field) + install_token)
     
-
-    
     #TODO: check context ?
     error_status, rapdu = send_APDU(card_context, card_info, security_info,  install_apdu)
 
@@ -1378,6 +1496,7 @@ def install_load(card_context, card_info, security_info, executable_load_file_ai
     log_end("install_load", error_status['errorStatus'])
     return error_status
 
+
 def load_blocks(card_context, card_info, security_info, load_file_path, block_size = 32):
     log_start("load_blocks")
     
@@ -1414,9 +1533,6 @@ def load_blocks(card_context, card_info, security_info, load_file_path, block_si
     
     log_end("load_blocks", error_status['errorStatus'])
     return error_status
-
-
-
 
 
 def extradite(card_context, card_info, security_info, security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
@@ -1553,16 +1669,30 @@ def put_scp_key(card_context, card_info, security_info, key_version_number, key_
     if error_status['errorStatus'] != 0x00:
         log_end("put_scp_key", error_status['errorStatus'])
         return error_status
-
         
     log_end("put_scp_key", error_status['errorStatus'])
     return error_status   
 
 
+def manage_channel(card_context, card_info, open_channel, logical_channel):
     
+    log_start("manage_channel")
 
+    if open_channel == True:
+        capdu = '00 70 00 00 01'
+    else:
+        if logical_channel < 0x01 and logical_channel > 0x03:
+            # channel number must be between 01 and 03
+            error_status = create_error_status(ERROR_WRONG_DATA, runtimeErrorDict[ERROR_WRONG_DATA])
+            return error_status
+        capdu = '00 70 80 ' + intToHexString(logical_channel) + '00'
 
-        
-    
+    error_status, rapdu = send_APDU(card_context, card_info, None, capdu)
 
+    if error_status['errorStatus'] != 0x00:
+        log_end("manage_channel", error_status['errorStatus'])
+        return error_status, None
 
+    log_end("manage_channel", error_status['errorStatus'])
+
+    return error_status, rapdu
