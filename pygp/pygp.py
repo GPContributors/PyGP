@@ -1092,7 +1092,7 @@ def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
         raise
 
         
-def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', sequence_counter = "000000"):
+def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, keysetversion = '21', sequence_counter = "000000"):
     """
         Performs an initializee update using specifiied key set and secure channel protocol.
 
@@ -1101,7 +1101,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str scp: The Session Channel Protocol to used. If None (default) the SCP returned by the card is used.
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returned by the card is used.
-        :param str ketsetversion: The Key Set version to used.
+        :param str keysetversion: The Key Set version to used.
         :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         
         :returns str hostCryptogram: The off card host cryptogram to use into the :func:`ext_auth()` function.
@@ -1115,7 +1115,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
     
         if enc_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "1")
+            found_key_list = get_key_in_repository(keysetversion, "1")
             if len(found_key_list) > 0:
                 (enc_key_vn, enc_key_id, enc_key_type, enc_key,) = found_key_list[0]
             else:
@@ -1123,7 +1123,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         
         if mac_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "2" )
+            found_key_list = get_key_in_repository(keysetversion, "2" )
             if len(found_key_list) > 0:
                 (mac_key_vn, mac_key_id, mac_key_type, mac_key) = found_key_list[0]
             else:
@@ -1131,7 +1131,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         
         if dek_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "3")
+            found_key_list = get_key_in_repository(keysetversion, "3")
             if len(found_key_list) > 0:
                 (dek_key_vn, dek_key_id, dek_key_type, dek_key) = found_key_list[0]
             else:
