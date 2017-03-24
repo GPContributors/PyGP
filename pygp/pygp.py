@@ -279,7 +279,7 @@ def get_key_in_repository(keysetversion, key_identifier = None):
 
     for key in key_list:
 
-        if (key[0] == key_version_number):
+        if (key[0] == keysetversion):
             if key_identifier != None:
                 if (key[1] == key_identifier):
                     found_key_vn = ''.join( re.split( '\W+', key[0].upper() ) )
