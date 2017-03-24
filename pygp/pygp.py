@@ -379,22 +379,27 @@ def close():
     '''
     try:
         global context
+        global readername     
+        global cardInfo   
+        global current_protocol
+        global securityInfo
         
         # first establish context
         error_status = conn.release_context(context)
-        
         __handle_error_status__(error_status)
+
+        # reset global variables after release context
+        context      = None
+        cardinfo     = None
+        readername   = None
+        current_protocol = conn.SCARD_PROTOCOL_Tx
+        securityInfo = None
         
         return error_status
+        
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
-    # reset global variables after release context
-    context      = None
-    cardinfo     = None
-    readername   = None
-    securityInfo = None
 
 
 def change_protocol(protocol):
