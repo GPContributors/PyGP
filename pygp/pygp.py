@@ -379,22 +379,27 @@ def close():
     '''
     try:
         global context
+        global readername     
+        global cardInfo   
+        global current_protocol
+        global securityInfo
         
         # first establish context
         error_status = conn.release_context(context)
-        
         __handle_error_status__(error_status)
+
+        # reset global variables after release context
+        context      = None
+        cardinfo     = None
+        readername   = None
+        current_protocol = conn.SCARD_PROTOCOL_Tx
+        securityInfo = None
         
         return error_status
+        
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
-    # reset global variables after release context
-    context      = None
-    cardinfo     = None
-    readername   = None
-    securityInfo = None
 
 
 def change_protocol(protocol):
@@ -1092,7 +1097,7 @@ def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
         raise
 
         
-def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', sequence_counter = "000000"):
+def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, keysetversion = '21', sequence_counter = "000000"):
     """
         Performs an initializee update using specifiied key set and secure channel protocol.
 
@@ -1101,7 +1106,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str scp: The Session Channel Protocol to used. If None (default) the SCP returned by the card is used.
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returned by the card is used.
-        :param str ketsetversion: The Key Set version to used.
+        :param str keysetversion: The Key Set version to used.
         :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         
         :returns str hostCryptogram: The off card host cryptogram to use into the :func:`ext_auth()` function.
@@ -1115,33 +1120,33 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
     
         if enc_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "1")
+            found_key_list = get_key_in_repository(keysetversion, "1")
             if len(found_key_list) > 0:
                 (enc_key_vn, enc_key_id, enc_key_type, enc_key,) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '1' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '1' into the off card key repository" %keysetversion )
         
         if mac_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "2" )
+            found_key_list = get_key_in_repository(keysetversion, "2" )
             if len(found_key_list) > 0:
                 (mac_key_vn, mac_key_id, mac_key_type, mac_key) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '2' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '2' into the off card key repository" %keysetversion )
         
         if dek_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "3")
+            found_key_list = get_key_in_repository(keysetversion, "3")
             if len(found_key_list) > 0:
                 (dek_key_vn, dek_key_id, dek_key_type, dek_key) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '3' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '3' into the off card key repository" %keysetversion )
         
         # TODO: manage this case ???
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi, sequence_counter )
+        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi, sequence_counter )
         __handle_error_status__(error_status, "init_update: ")
         securityInfo = security_Info_template
 
@@ -1186,7 +1191,7 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
 
 
 
-def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, ketsetversion = '21', sequence_counter = "000000", securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
+def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, keysetversion = '21', sequence_counter = "000000", securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING):
     """
         Performs a complete authentication with the card using the specifiied key set, secure channel protocol,and security level for secure messaging.
 
@@ -1195,7 +1200,7 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         :param str dek_key: The Key Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str scp: The Session Channel Protocol to used. If None (default) the SCP returned by the card is used.
         :param str scpi: The Secure Channel Protocol Implementation to used. If None (default) the SCP implementation returned by the card is used.
-        :param str ketsetversion: The Key Set version to used.
+        :param str keysetversion: The Key Set version to used.
         :param str sequence_counter: The current sequence counter. Use only in case of payload mode.
         :param int securitylevel: The security level of the secure messaging. Could be:
         
@@ -1218,33 +1223,33 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
     
         if enc_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "1")
+            found_key_list = get_key_in_repository(keysetversion, "1")
             if len(found_key_list) > 0:
                 (enc_key_vn, enc_key_id, enc_key_type, enc_key,) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '1' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '1' into the off card key repository" %keysetversion )
         
         if mac_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "2" )
+            found_key_list = get_key_in_repository(keysetversion, "2" )
             if len(found_key_list) > 0:
                 (mac_key_vn, mac_key_id, mac_key_type, mac_key) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '2' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '2' into the off card key repository" %keysetversion )
         
         if dek_key == None:
             # get the key from the repository
-            found_key_list = get_key_in_repository(ketsetversion, "3")
+            found_key_list = get_key_in_repository(keysetversion, "3")
             if len(found_key_list) > 0:
                 (dek_key_vn, dek_key_id, dek_key_type, dek_key) = found_key_list[0]
             else:
-                raise BaseException("Could not find key with key version number %s and key id '3' into the off card key repository" %ketsetversion )
+                raise BaseException("Could not find key with key version number %s and key id '3' into the off card key repository" %keysetversion )
         
         # TODO: manage this case ???
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, ketsetversion, base_key, enc_key, mac_key, dek_key, scp, scpi , sequence_counter)
+        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(context, cardInfo, keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi , sequence_counter)
         __handle_error_status__(error_status, "auth: ")
         securityInfo = security_Info_template
 
