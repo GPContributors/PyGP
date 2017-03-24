@@ -1060,7 +1060,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
     
         # check if a scp has been set by the user, if not take the scp into the init update response
         if scp == None:
-            scp = keyInformationData[1]
+            scp = intToHexString(keyInformationData[1])
         
         # test if reported SCP is consistent with passed SCP
         if int(scp, 16) != keyInformationData[1]:
