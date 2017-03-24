@@ -1063,12 +1063,12 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
             scp = keyInformationData[1]
         
         # test if reported SCP is consistent with passed SCP
-        if int(scp, 16) != keyInformationData[1]:
+        if int(str(scp), 16) != keyInformationData[1]:
             error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
             return error_status, None, None
         
         # update the security information structure
-        securityInfo['secureChannelProtocol'] = int(scp, 16)
+        securityInfo['secureChannelProtocol'] = int(str(scp), 16)
 
     
         # in SCP03 the scp implementation value is returned by the init update response
