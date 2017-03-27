@@ -124,8 +124,8 @@ def intToHexString(intValue, len = 1):
         ::
 
             # get the string representation of the integer
-            aInt = 0x03
-            intToHexString ( aInt, 2 ) #returns  "0003"
+            aInt = 10
+            intToHexString ( aInt, 2 ) #returns  "000A"
             
 
     """
