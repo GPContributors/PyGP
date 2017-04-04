@@ -58,7 +58,7 @@ def __check_security_info__(security_info):
     return error_status
 
 
-def select_channel(card_context, card_info, logical_channel): 
+def select_channel(logical_channel): 
     log_start("select_channel")
     
     # check the parameter value
@@ -371,7 +371,7 @@ def unwrap_command(security_info, rapdu):
         return error_status, None
 
 
-def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False): 
+def send_APDU(securityInfo, capdu, raw_mode = False): 
     
     global last_apdu_response
     global last_apdu_status
@@ -381,7 +381,7 @@ def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False):
 
     
     log_start("send_APDU")
-    #TODO: check context ? managing security info wrap the command
+    #TODO: managing security info wrap the command
 
     if apdu_timing == True:
         start_time = time.perf_counter()
@@ -401,7 +401,7 @@ def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False):
         error_status = create_no_error_status(0x00)
         return error_status, None
     else:
-        error_status, rapdu = send_apdu(card_context, card_info, c_wrapped_apdu)
+        error_status, rapdu = send_apdu(c_wrapped_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("send_APDU", error_status['errorStatus'])
@@ -430,7 +430,7 @@ def send_APDU(card_context, card_info, securityInfo, capdu, raw_mode = False):
     return error_status, rapdu
     
 
-def select_issuerSecurityDomain(card_context, card_info):
+def select_issuerSecurityDomain():
     
 
     global current_selected_aid
@@ -439,9 +439,7 @@ def select_issuerSecurityDomain(card_context, card_info):
 
     capdu = "00 A4 04 00 00"
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, None, capdu)
+    error_status, rapdu = send_APDU(None, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_issuerSecurityDomain", error_status['errorStatus'])
@@ -467,7 +465,7 @@ def select_issuerSecurityDomain(card_context, card_info):
     return error_status
 
 
-def select_application(card_context, card_info, str_AID):
+def select_application(str_AID):
     
 
     global current_selected_aid
@@ -476,9 +474,7 @@ def select_application(card_context, card_info, str_AID):
 
     capdu = "00 A4 04 00 " + lv (str_AID)
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, None, capdu)
+    error_status, rapdu = send_APDU(None, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
@@ -504,7 +500,7 @@ def select_application(card_context, card_info, str_AID):
     return error_status
 
 
-def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleState, aid):
+def set_status(securityInfo, cardElement, lifeCycleState, aid):
     
     log_start("set_status")
     # supress blank if any
@@ -513,9 +509,7 @@ def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleStat
 
     capdu = "80 F0 " + cardElement + lifeCycleState + lv (aid)
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+    error_status, rapdu = send_APDU(securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("set_status", error_status['errorStatus'])
@@ -526,7 +520,7 @@ def set_status(card_context, card_info, securityInfo, cardElement, lifeCycleStat
     return error_status
 
 
-def set_crs_status(card_context, card_info, securityInfo, status_type, status_value, aid):
+def set_crs_status(securityInfo, status_type, status_value, aid):
     
     log_start("set_crs_status")
     # supress blank if any
@@ -535,9 +529,7 @@ def set_crs_status(card_context, card_info, securityInfo, status_type, status_va
 
     capdu = "80 F0 " + status_type + status_value + "4F" + lv(aid)
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+    error_status, rapdu = send_APDU(securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("set_crs_status", error_status['errorStatus'])
@@ -550,15 +542,13 @@ def set_crs_status(card_context, card_info, securityInfo, status_type, status_va
     return error_status, rapdu
 
 
-def delete_application(card_context, card_info, securityInfo,  str_AID):
+def delete_application(securityInfo,  str_AID):
     
     log_start("delete_application")
 
     capdu = "80 E4 00 00 " + lv ('4F' + lv(str_AID))
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+    error_status, rapdu = send_APDU(securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
@@ -569,15 +559,13 @@ def delete_application(card_context, card_info, securityInfo,  str_AID):
     return error_status
 
 
-def delete_package(card_context, card_info, securityInfo,  str_AID):
+def delete_package(securityInfo,  str_AID):
     
     log_start("delete_package")
 
     capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+    error_status, rapdu = send_APDU(securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_package", error_status['errorStatus'])
@@ -588,15 +576,13 @@ def delete_package(card_context, card_info, securityInfo,  str_AID):
     return error_status
 
 
-def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionNumber):
+def delete_key(securityInfo, KeyIdentifier, keyVersionNumber):
     
     log_start("delete_key")
 
     capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + lv('D2' + lv(keyVersionNumber))
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, securityInfo, capdu)
+    error_status, rapdu = send_APDU(securityInfo, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_key", error_status['errorStatus'])
@@ -607,13 +593,13 @@ def delete_key(card_context, card_info, securityInfo, KeyIdentifier, keyVersionN
     return error_status
 
 
-def get_cplc_data(card_context, card_info, security_info):
+def get_cplc_data(security_info):
     
     log_start("get_cplc_data")
 
     capdu = "80 CA 9F 7F 00"
     
-    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    error_status, rapdu = send_APDU(security_info, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("get_cplc_data", error_status['errorStatus'])
@@ -636,13 +622,13 @@ def get_cplc_data(card_context, card_info, security_info):
         return error_status, None
 
 
-def get_key_information_template(card_context, card_info, security_info):
+def get_key_information_template(security_info):
     
     log_start("get_key_information_template")
 
     capdu = "80 CA 00 E0 00"
     
-    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    error_status, rapdu = send_APDU(security_info, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("get_key_information_template", error_status['errorStatus'])
@@ -713,7 +699,7 @@ def get_key_information_template(card_context, card_info, security_info):
     return error_status, keyInformation
 
 
-def store_data(card_context, card_info, security_info, data):
+def store_data(security_info, data):
     
     log_start("store_data")
     block_size =239 # 255 bytes minus 8 byte MAC minus 8 byte encryption padding
@@ -741,7 +727,7 @@ def store_data(card_context, card_info, security_info, data):
             remaining_bytes = remaining_bytes - block_size
 
         # send the APDU
-        error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+        error_status, rapdu = send_APDU(security_info, capdu)
         block_number = block_number + 1
 
         if error_status['errorStatus'] != 0x00:
@@ -758,7 +744,7 @@ def store_data(card_context, card_info, security_info, data):
     return error_status
 
 
-def get_data(card_context, card_info, security_info, identifier):
+def get_data(security_info, identifier):
     
     log_start("get_data")
 
@@ -780,9 +766,7 @@ def get_data(card_context, card_info, security_info, identifier):
         #one byte identifier
         capdu = capdu +  identifier + '00'  + '00'
 
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    error_status, rapdu = send_APDU(security_info, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("get_data", error_status['errorStatus'])
@@ -793,7 +777,7 @@ def get_data(card_context, card_info, security_info, identifier):
     return error_status, rapdu
 
 
-def get_status(card_context, card_info, security_info, card_element):
+def get_status(security_info, card_element):
     
     log_start("get_status")
 
@@ -804,9 +788,7 @@ def get_status(card_context, card_info, security_info, card_element):
    
     capdu = "80 F2 " + card_element + "02 02 4F 00" + "00"
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    error_status, rapdu = send_APDU(security_info, capdu)
     
     if error_status['errorStatus'] != 0x00:
         log_end("get_status", error_status['errorStatus'])
@@ -819,7 +801,7 @@ def get_status(card_context, card_info, security_info, card_element):
         while last_status() == '6310':
             # send a get status next occurence
             capdu = "80 F2 " + card_element + "03 02 4F 00" + "00"
-            error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+            error_status, rapdu = send_APDU(security_info, capdu)
         
             if error_status['errorStatus'] != 0x00:
                 log_end("get_status", error_status['errorStatus'])
@@ -860,7 +842,7 @@ def get_status(card_context, card_info, security_info, card_element):
 
 
 
-def get_crs_status(card_context, card_info, security_info, aid, tag_list):
+def get_crs_status(security_info, aid, tag_list):
     
     log_start("get_crs_status")
 
@@ -873,9 +855,7 @@ def get_crs_status(card_context, card_info, security_info, aid, tag_list):
     
     capdu = "80 F2 40 00 " + lv(data_field) + "00"
     
-    #TODO: check context ?
-
-    error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+    error_status, rapdu = send_APDU(security_info, capdu)
     
     if error_status['errorStatus'] != 0x00:
         log_end("get_crs_status", error_status['errorStatus'])
@@ -887,7 +867,7 @@ def get_crs_status(card_context, card_info, security_info, aid, tag_list):
     while last_status() == '6310':
         # send a get status next occurence
         capdu = "80 F2 40 01 " + lv(data_field) + "00"
-        error_status, rapdu = send_APDU(card_context, card_info, security_info, capdu)
+        error_status, rapdu = send_APDU(security_info, capdu)
     
         if error_status['errorStatus'] != 0x00:
             log_end("get_crs_status", error_status['errorStatus'])
@@ -978,7 +958,7 @@ def get_crs_status(card_context, card_info, security_info, aid, tag_list):
     return error_status, app_info_list
 
 
-def initialize_update(card_context, card_info, key_set_version , base_key, enc_key , mac_key , dek_key , scp, scp_implementation, sequence_counter = "000000" ):
+def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , scp, scp_implementation, sequence_counter = "000000" ):
 
         
     global last_apdu_response
@@ -993,8 +973,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
     log_debug("initialize_update: Host challenge Data: %s " % hostChallenge)
     # create the initialize update APDU command (with Le = Max data)
     initUpdateAPDU = '80' + '50' + key_set_version + '00 08' + hostChallenge + '00'
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, None,  initUpdateAPDU)
+    error_status, rapdu = send_APDU(None,  initUpdateAPDU)
     
     if error_status['errorStatus'] != 0x00:
         log_end("initialize_update", error_status['errorStatus'])
@@ -1234,7 +1213,7 @@ def initialize_update(card_context, card_info, key_set_version , base_key, enc_k
     log_end("initialize_update", error_status['errorStatus'])
     return error_status, securityInfo, host_cryptogram
 
-def internal_authenticate(card_context, card_info, key_version_number, key_identifier , crt_data , ePK_OCE ):
+def internal_authenticate(key_version_number, key_identifier , crt_data , ePK_OCE ):
     
     log_start("internal_authenticate")
     
@@ -1246,8 +1225,7 @@ def internal_authenticate(card_context, card_info, key_version_number, key_ident
 
     internal_authenticate_apdu = '80 88'  + key_version_number + key_identifier + lv(data_field)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, None,  internal_authenticate_apdu)
+    error_status, rapdu = send_APDU(None,  internal_authenticate_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("internal_authenticate", error_status['errorStatus'])
@@ -1258,7 +1236,7 @@ def internal_authenticate(card_context, card_info, key_version_number, key_ident
     return error_status, rapdu
     
 
-def mutual_authenticate(card_context, card_info, key_version_number, key_identifier , crt_data , ePK_OCE ):
+def mutual_authenticate(key_version_number, key_identifier , crt_data , ePK_OCE ):
     
     log_start("mutual_authenticate")
 
@@ -1269,8 +1247,7 @@ def mutual_authenticate(card_context, card_info, key_version_number, key_identif
 
     mutual_authenticate_apdu = '80 82'  + key_version_number + key_identifier + lv(data_field)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, None,  mutual_authenticate_apdu)
+    error_status, rapdu = send_APDU(None,  mutual_authenticate_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("mutual_authenticate", error_status['errorStatus'])
@@ -1280,7 +1257,7 @@ def mutual_authenticate(card_context, card_info, key_version_number, key_identif
     log_end("mutual_authenticate", error_status['errorStatus'])
     return error_status, rapdu
 
-def external_authenticate(card_context, card_info, security_info, security_level, host_cryptogram):
+def external_authenticate(security_info, security_level, host_cryptogram):
 
     log_start("external_authenticate")
 
@@ -1305,9 +1282,7 @@ def external_authenticate(card_context, card_info, security_info, security_level
         error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
         return error_status
 
-
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, None,  externalAuthAPDU)
+    error_status, rapdu = send_APDU(None,  externalAuthAPDU)
 
     if error_status['errorStatus'] != 0x00:
         log_end("external_authenticate", error_status['errorStatus'])
@@ -1320,7 +1295,7 @@ def external_authenticate(card_context, card_info, security_info, security_level
     log_end("external_authenticate", error_status['errorStatus'])
     return error_status
 
-def get_certificate(card_context, card_info, security_info,key_version_number, key_identifier):
+def get_certificate(security_info,key_version_number, key_identifier):
     log_start("get_certificate")
     
     error_status = __check_security_info__(security_info)
@@ -1333,8 +1308,7 @@ def get_certificate(card_context, card_info, security_info,key_version_number, k
 
     get_certificate_apdu = '80 CA BF 21' + lv ('A6' + lv ( '83' + lv (key_version_number + key_identifier)))
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  get_certificate_apdu)
+    error_status, rapdu = send_APDU(security_info,  get_certificate_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("get_certificate", error_status['errorStatus'])
@@ -1346,7 +1320,7 @@ def get_certificate(card_context, card_info, security_info,key_version_number, k
 
 
 
-def perform_security_operation(card_context, card_info, security_info, key_version_number, key_identifier , crt_data ):
+def perform_security_operation(security_info, key_version_number, key_identifier , crt_data ):
     
     log_start("perform_security_operation")
     
@@ -1360,8 +1334,7 @@ def perform_security_operation(card_context, card_info, security_info, key_versi
 
     perform_security_operation_apdu = '80 2A' + key_version_number + key_identifier + lv(crt_data)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  perform_security_operation_apdu)
+    error_status, rapdu = send_APDU(security_info,  perform_security_operation_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("perform_security_operation", error_status['errorStatus'])
@@ -1371,7 +1344,7 @@ def perform_security_operation(card_context, card_info, security_info, key_versi
     log_end("perform_security_operation", error_status['errorStatus'])
     return error_status
 
-def registry_update(card_context, card_info, security_info, security_domain_AID, application_aid, application_privileges = "00",  registry_parameter_field = None, install_token = None):
+def registry_update(security_info, security_domain_AID, application_aid, application_privileges = "00",  registry_parameter_field = None, install_token = None):
     log_start("registry_update")
     
     error_status = __check_security_info__(security_info)
@@ -1396,8 +1369,7 @@ def registry_update(card_context, card_info, security_info, security_domain_AID,
 
     registry_update_apdu = '80 E6 40 00'  + lv(registry_update_apdu_data + lv(parameter_field) + install_token)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  registry_update_apdu)
+    error_status, rapdu = send_APDU(security_info,  registry_update_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("registry_update", error_status['errorStatus'])
@@ -1408,7 +1380,7 @@ def registry_update(card_context, card_info, security_info, security_domain_AID,
     return error_status
 
 
-def install_install(card_context, card_info, security_info, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
+def install_install(security_info, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, application_privileges = "00", application_specific_parameters = None, install_parameters = None, install_token = None):
     log_start("install_install")
     
     error_status = __check_security_info__(security_info)
@@ -1442,8 +1414,7 @@ def install_install(card_context, card_info, security_info, make_selectable, exe
     else:
         install_apdu = '80 E6 04 00'  + lv(install_apdu_data + lv(parameter_field) + install_token)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  install_apdu)
+    error_status, rapdu = send_APDU(security_info,  install_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("install_install", error_status['errorStatus'])
@@ -1454,7 +1425,7 @@ def install_install(card_context, card_info, security_info, make_selectable, exe
     return error_status
         
 
-def install_load(card_context, card_info, security_info, executable_load_file_aid, security_domain_aid, load_file_data_block_hash = None, load_parameters = None, load_token = None):
+def install_load(security_info, executable_load_file_aid, security_domain_aid, load_file_data_block_hash = None, load_parameters = None, load_token = None):
     log_start("install_load")
     
     error_status = __check_security_info__(security_info)
@@ -1483,8 +1454,7 @@ def install_load(card_context, card_info, security_info, executable_load_file_ai
 
     install_apdu = '80 E6 02 00'  + lv(install_apdu) 
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  install_apdu)
+    error_status, rapdu = send_APDU(security_info,  install_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("install_load", error_status['errorStatus'])
@@ -1495,7 +1465,7 @@ def install_load(card_context, card_info, security_info, executable_load_file_ai
     return error_status
 
 
-def load_blocks(card_context, card_info, security_info, load_file_path, block_size = 32):
+def load_blocks(security_info, load_file_path, block_size = 32):
     log_start("load_blocks")
     
     error_status = __check_security_info__(security_info)
@@ -1520,8 +1490,7 @@ def load_blocks(card_context, card_info, security_info, load_file_path, block_si
         else:
             load_apdu = '80' + 'E8' + '00'+ blockNumber + lv(block)
 
-        #TODO: check context ?
-        error_status, rapdu = send_APDU(card_context, card_info, security_info,  load_apdu)
+        error_status, rapdu = send_APDU(security_info,  load_apdu)
 
         if error_status['errorStatus'] != 0x00:
             log_end("extradite", error_status['errorStatus'])
@@ -1533,7 +1502,7 @@ def load_blocks(card_context, card_info, security_info, load_file_path, block_si
     return error_status
 
 
-def extradite(card_context, card_info, security_info, security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
+def extradite(security_info, security_domain_AID, application_aid, identification_number = None,  image_Number = None, application_provider_identifier = None, token_identifier = None, extraditeToken = None):
     log_start("extradite")
     
     error_status = __check_security_info__(security_info)
@@ -1568,8 +1537,7 @@ def extradite(card_context, card_info, security_info, security_domain_AID, appli
 
     extradite_apdu = '80 E6 10 00'  + lv(extradite_apdu)
     
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  extradite_apdu)
+    error_status, rapdu = send_APDU(security_info,  extradite_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("extradite", error_status['errorStatus'])
@@ -1580,7 +1548,7 @@ def extradite(card_context, card_info, security_info, security_domain_AID, appli
     return error_status
 
 
-def put_key(card_context, card_info, security_info, key_version_number, key_identifier, key_type, key_value, replace = False ):
+def put_key(security_info, key_version_number, key_identifier, key_type, key_value, replace = False ):
     
     log_start("put_key")
     
@@ -1614,8 +1582,7 @@ def put_key(card_context, card_info, security_info, key_version_number, key_iden
         return error_status
     
   
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  put_key_apdu)
+    error_status, rapdu = send_APDU(security_info,  put_key_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("put_key", error_status['errorStatus'])
@@ -1626,7 +1593,7 @@ def put_key(card_context, card_info, security_info, key_version_number, key_iden
     return error_status
     
 
-def put_scp_key(card_context, card_info, security_info, key_version_number, key_list, replace = False ):
+def put_scp_key(security_info, key_version_number, key_list, replace = False ):
 
     log_start("put_scp_key")
 
@@ -1661,8 +1628,7 @@ def put_scp_key(card_context, card_info, security_info, key_version_number, key_
         return error_status
 
     put_scp_key_apdu = '80 D8' + p1 + '81' + lv(apdu_data)
-    #TODO: check context ?
-    error_status, rapdu = send_APDU(card_context, card_info, security_info,  put_scp_key_apdu)
+    error_status, rapdu = send_APDU(security_info,  put_scp_key_apdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("put_scp_key", error_status['errorStatus'])
@@ -1671,8 +1637,7 @@ def put_scp_key(card_context, card_info, security_info, key_version_number, key_
     log_end("put_scp_key", error_status['errorStatus'])
     return error_status   
 
-
-def manage_channel(card_context, card_info, open_channel, logical_channel):
+def manage_channel(open_channel, logical_channel):
     
     log_start("manage_channel")
 
@@ -1685,7 +1650,7 @@ def manage_channel(card_context, card_info, open_channel, logical_channel):
             return error_status
         capdu = '00 70 80 ' + intToHexString(logical_channel) + '00'
 
-    error_status, rapdu = send_APDU(card_context, card_info, None, capdu)
+    error_status, rapdu = send_APDU(None, capdu)
 
     if error_status['errorStatus'] != 0x00:
         log_end("manage_channel", error_status['errorStatus'])

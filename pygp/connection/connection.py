@@ -9,6 +9,10 @@ from pygp.logger import *
 # PCSC by default
 connection_module = importlib.import_module("pygp.connection.pcscconnection")
 
+# Global variables 
+context      = None
+cardinfo     = None
+
 # ISO case
 CASE_1        = 0x01
 CASE_2S        = 0x02
@@ -31,14 +35,18 @@ SCARD_PROTOCOL_T1           = 0x00000002
 SCARD_PROTOCOL_RAW          = 0x00010000
 SCARD_PROTOCOL_Tx           = (SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1)
 
-def __check_context__(card_context):
+def __check_context__():
+    global card_context
+
     if card_context == None:
         error_status = create_error_status(ERROR_NO_CARD_CONTEXT_INITIALIZED, runtimeErrorDict[ERROR_NO_CARD_CONTEXT_INITIALIZED])
     else:
         error_status = create_no_error_status(0x00)
     return error_status
 
-def __check_card_info__(card_info):
+def __check_card_info__():
+    global card_info
+
     if card_info == None:
         error_status = create_error_status(ERROR_NO_CARD_INFO_INITIALIZED, runtimeErrorDict[ERROR_NO_CARD_INFO_INITIALIZED])
         return error_status
@@ -47,6 +55,8 @@ def __check_card_info__(card_info):
     return error_status
 
 def create_card_info_dict(p_str_atr, p_byte_logicalChannel, p_str_specVersion, p_byte_protocol, p_handle_card):
+    global card_info
+
     card_info = {}
     card_info['atr']  = p_str_atr 
     card_info['logicalChannel']  = p_byte_logicalChannel 
@@ -56,38 +66,52 @@ def create_card_info_dict(p_str_atr, p_byte_logicalChannel, p_str_specVersion, p
     return card_info
 
 def establish_context():
-    global connection_module    
-    return connection_module.establish_context()
+    global connection_module
+    global card_context
+    error_status, card_context = connection_module.establish_context()
+    return error_status
 
-def release_context(card_context):
-    global connection_module    
-    return connection_module.release_context(card_context)
+def release_context():
+    global connection_module
+    global card_context
+    error_status = connection_module.release_context(card_context)
 
-def card_connect(card_context, reader_name,  protocol):
-    global connection_module    
-    return connection_module.card_connect(card_context, reader_name, protocol)
+    context = None
+    cardInfo = None
+    return error_status
+
+def card_connect(reader_name,  protocol):
+    global connection_module
+    global card_context
+    global card_info
+    error_status, card_info = connection_module.card_connect(card_context, reader_name, protocol)
+    return error_status
     
-def card_disconnect(card_info, disposition ):
-    global connection_module    
+def card_disconnect(disposition ):
+    global connection_module
+    global card_info
     return connection_module.card_disconnect(card_info, disposition )
 
-def list_readers(card_context):
-    global connection_module    
+def list_readers():
+    global connection_module
+    global card_context
     return connection_module.list_readers(card_context )
 
-def getATR(card_context, card_info):
+def getATR():
+    global card_context
+    global card_info
     return card_info['atr']
 
 
 
-def send_apdu(card_context, card_info, capdu):
+def send_apdu(capdu):
     global connection_module
 
-    error_status = __check_context__(card_context)
+    error_status = __check_context__()
     if error_status['errorStatus'] != 0x00:
         return error_status
     
-    error_status = __check_card_info__(card_info)
+    error_status = __check_card_info__()
     if error_status['errorStatus'] != 0x00:
         return error_status
 
