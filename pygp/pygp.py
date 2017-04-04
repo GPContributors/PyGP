@@ -113,7 +113,7 @@ def set_log_mode(loggingMode, file_path = None):
             * NONE          (0x00): No log 
             * CONSOLE_TRACE (0x01): Logging output is sent to sys.stdout, sys.stderr console.
             * FILE_TRACE    (0x02): Logging output is sent to a file specified by the file parameter.
-            
+                                    If you didn't set file name then [script file name].log file will be created.
             The logging level could be: 
             
             * DEBUG_LEVEL   (0x04): All logging messages are displayed
@@ -133,6 +133,8 @@ def set_log_mode(loggingMode, file_path = None):
             # set the logging mode to a file with debug logging level
             set_log_mode(FILE_TRACE|DEBUG_LEVEL, "C:/log/myLoggingFile.txt")
             
+            # set the logging mode to a file with debug logging level, but without filename
+            set_log_mode(FILE_TRACE|DEBUG_LEVEL)
             # set the logging mode to the console only with  information logging level and APDU exchanges
             set_log_mode(CONSOLE_TRACE|INFO_LEVEL|APDU)
 
@@ -146,6 +148,11 @@ def set_log_mode(loggingMode, file_path = None):
         logger.addStreamHandler()
     
     if (loggingMode & FILE_TRACE) == FILE_TRACE:
+        import __main__
+        import os
+        # set file_path if it doesn't set.
+        if( file_path == None ) :
+            file_path = os.path.splitext(__main__.__file__)[0]+".log"
         # add a fileHandler to the system console
         logger.addFileHandler(file_path)
     
