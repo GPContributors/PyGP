@@ -1064,15 +1064,15 @@ def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE_ECKA ):
 
 def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
     """
-		Performs an mutual authenticate command using the specified parameters. 
+        Performs an mutual authenticate command using the specified parameters. 
 
-		:param str key_version_number: the key set version.
-		:param str key_identifier: the key identifier.
-		:param str crt_data: The data for key establishment.
-		:param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
-		
-		
-		:returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
+        :param str key_version_number: the key set version.
+        :param str key_identifier: the key identifier.
+        :param str crt_data: The data for key establishment.
+        :param str ePK_OCE_ECKA: The Ephemeral public key of the OCE used for key agreement
+        
+        
+        :returns str data_response: The response data containing the Ephemeral public key of the SD used for key agreement and the receipt.
 
     """
     try:
@@ -1268,7 +1268,7 @@ def extradite(security_domain_AID, application_aid, identification_number = None
         :param str application_provider_identifier: The Application Provider identifier.
         :param str token_identifier: The Token identifier/number (digital signature counter).
         :param str extraditeToken: The extradition token (None by default).
-		
+        
     '''
     try:
         global context       

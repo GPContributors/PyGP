@@ -10,16 +10,16 @@ from pygp.logger import *
 connection_module = importlib.import_module("pygp.connection.pcscconnection")
 
 # ISO case
-CASE_1		= 0x01
-CASE_2S		= 0x02
-CASE_2E		= 0x2E	
-CASE_3S		= 0x03
-CASE_3E		= 0x3E	
-CASE_4S		= 0x04
-CASE_4E		= 0x4E
+CASE_1        = 0x01
+CASE_2S        = 0x02
+CASE_2E        = 0x2E    
+CASE_3S        = 0x03
+CASE_3E        = 0x3E    
+CASE_4S        = 0x04
+CASE_4E        = 0x4E
 
 # APDU Direction
-TO_CARD		= 0x01
+TO_CARD        = 0x01
 TO_READER   = 0x02
 
 '''

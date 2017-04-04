@@ -332,19 +332,19 @@ def DES_ECB(data, key):
     return DES3_ECB(data, key)
 
 def DES_INV_ECB(data, key):
-	''' 
+    ''' 
 
-		Performs a DES-1 ECB on the hexadecimal string using the specified key
-		
-		:param str data: Hexadecimal string to decipher.
+        Performs a DES-1 ECB on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to decipher.
 
-		:param str key: the key to use
+        :param str key: the key to use
 
-		:returns str data_ret: the deciphered data.
+        :returns str data_ret: the deciphered data.
 
-	'''
-	#TODO: maybe check the key size or take only the first 8 bytes ?
-	return DES3_INV_ECB(data, key)
+    '''
+    #TODO: maybe check the key size or take only the first 8 bytes ?
+    return DES3_INV_ECB(data, key)
 
 def DES3_CBC(data, key, iv="0000000000000000"):
     ''' 
@@ -393,44 +393,44 @@ def DES3_INV_CBC(data, key, iv="0000000000000000"):
     return ct.hex().upper() 
 
 def DES3_ECB(data, key):
-	''' 
+    ''' 
 
-		Performs a 3DES ECB on the hexadecimal string using the specified key
-		
-		:param str data: Hexadecimal string to cipher.
+        Performs a 3DES ECB on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to cipher.
 
-		:param str key: the key to use
+        :param str key: the key to use
 
-		:returns str data_ret: the ciphered data.
+        :returns str data_ret: the ciphered data.
 
-	'''
-	# pad data if needed
-	data_bytes  = bytes.fromhex(data)
-	key_bytes  = bytes.fromhex(key)
-	cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
-	encryptor = cipher.encryptor()
-	ct = encryptor.update(data_bytes) + encryptor.finalize()
-	return ct.hex().upper() 
+    '''
+    # pad data if needed
+    data_bytes  = bytes.fromhex(data)
+    key_bytes  = bytes.fromhex(key)
+    cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(data_bytes) + encryptor.finalize()
+    return ct.hex().upper() 
 
 def DES3_INV_ECB(data, key):
-	''' 
+    ''' 
 
-		Performs a 3DES-1 ECB on the hexadecimal string using the specified key
-		
-		:param str data: Hexadecimal string to cipher.
+        Performs a 3DES-1 ECB on the hexadecimal string using the specified key
+        
+        :param str data: Hexadecimal string to cipher.
 
-		:param str key: the key to use
+        :param str key: the key to use
 
-		:returns str data_ret: the ciphered data.
+        :returns str data_ret: the ciphered data.
 
-	'''
-	# pad data if needed
-	data_bytes  = bytes.fromhex(data)
-	key_bytes  = bytes.fromhex(key)
-	cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
-	decryptor = cipher.decryptor()
-	ct = decryptor.update(data_bytes) + decryptor.finalize()
-	return ct.hex().upper() 
+    '''
+    # pad data if needed
+    data_bytes  = bytes.fromhex(data)
+    key_bytes  = bytes.fromhex(key)
+    cipher = Cipher(algorithms.TripleDES(key_bytes), modes.ECB(), backend=default_backend())
+    decryptor = cipher.decryptor()
+    ct = decryptor.update(data_bytes) + decryptor.finalize()
+    return ct.hex().upper() 
 
 def AES_CMAC(data, key):
     ''' 
@@ -1079,7 +1079,7 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
         | "brainpoolP512t1" |  Brainpool P-512 T1           |
         +-------------------+-------------------------------+
 
-			
+            
         :returns tuple data_ret: the private and public key objects
  
     '''
@@ -1147,7 +1147,7 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
         | "brainpoolP512t1" |  Brainpool P-512 T1           |
         +-------------------+-------------------------------+
 
-			
+            
         :returns tuple data_ret: the private and public key objects
  
     '''
