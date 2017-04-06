@@ -26,7 +26,6 @@ APDU_TIMING     = 0x80
 must_stop_on_error = False
 current_protocol = conn.SCARD_PROTOCOL_Tx
 readername   = None
-securityInfo = None
 key_list    = []
 
 
@@ -149,10 +148,12 @@ def set_log_mode(loggingMode, file_path = None):
         import __main__
         import os
         # set file_path if it doesn't set.
-        if( file_path == None ) :
-            file_path = os.path.splitext(__main__.__file__)[0]+".log"
-        # add a fileHandler to the system console
-        logger.addFileHandler(file_path)
+        if (file_path == None):
+            if (hasattr(__main__, '__file__')):
+                file_path = os.path.splitext(__main__.__file__)[0]+".log"
+                # add a fileHandler to the system console
+                logger.addFileHandler(file_path)
+        # in case of interactive mode, just ignore this option and don't save the trace.
     
     if (loggingMode & DEBUG_LEVEL) == DEBUG_LEVEL:
         # set the logging level to debug
@@ -358,7 +359,9 @@ def terminal(readerName = None):
                 logger.log_error('No reader found')
         
         readername = readerName
-        
+
+        gp.clear_securityInfo()
+
         return error_status
     
     except BaseException as e:
@@ -381,6 +384,7 @@ def close():
             }
     '''
     try:
+        gp.clear_securityInfo()
         # first establish context
         error_status = conn.release_context()
         
@@ -393,8 +397,6 @@ def close():
 
     # reset global variables after release context
     readername   = None
-    securityInfo = None
-
 
 def change_protocol(protocol):
     '''
@@ -481,15 +483,15 @@ def atr():
         raise
 
 
-def select_isd():
+def select_isd(channel = 0):
     """
         Select the Issuer Security Domain using select by default APDU command.
+        :param int channel: The logical channel number. If None (default) channel number 00 will be used.
     """
     try:
         global readername    
-        global securityInfo    
 
-        error_status = gp.select_issuerSecurityDomain()
+        error_status, rapdu = gp.select_issuerSecurityDomain(channel)
 
         __handle_error_status__(error_status, "select_isd: ")
 
@@ -508,9 +510,8 @@ def set_sd_state(lifeCycleState, aid):
     """
     try:
         global readername    
-        global securityInfo    
 
-        error_status = gp.set_status(securityInfo, CARD_ELEMENT_SD_AND_APPLICATIONS, lifeCycleState, aid)
+        error_status = gp.set_status(CARD_ELEMENT_SD_AND_APPLICATIONS, lifeCycleState, aid)
 
         __handle_error_status__(error_status, "set_sd_state: ")
 
@@ -528,9 +529,8 @@ def set_app_state(lifeCycleState, aid):
     """
     try:
         global readername    
-        global securityInfo    
 
-        error_status = gp.set_status(securityInfo, CARD_ELEMENT_APPLICATION_AND_SSD, lifeCycleState, aid)
+        error_status = gp.set_status(CARD_ELEMENT_APPLICATION_AND_SSD, lifeCycleState, aid)
 
         __handle_error_status__(error_status, "set_app_state: ")
 
@@ -550,9 +550,8 @@ def set_status(cardElement, lifeCycleState, aid):
     """
     try:
         global readername    
-        global securityInfo    
 
-        error_status = gp.set_status(securityInfo, cardElement, lifeCycleState, aid)
+        error_status = gp.set_status(cardElement, lifeCycleState, aid)
 
         __handle_error_status__(error_status, "set_status: ")
 
@@ -572,9 +571,8 @@ def set_crs_status(status_type, status_value, aid):
     """
     try:
         global readername    
-        global securityInfo    
 
-        error_status, app_info_list = gp.set_status(securityInfo, status_type, status_value, aid)
+        error_status, app_info_list = gp.set_status(status_type, status_value, aid)
 
         __handle_error_status__(error_status, "set_crs_status: ")
 
@@ -593,9 +591,7 @@ def store_data(data):
 
     """
     try:
-        global securityInfo  
-        
-        error_status = gp.store_data(securityInfo, data)
+        error_status = gp.store_data(data)
 
         __handle_error_status__(error_status, "store_data: ")  
 
@@ -615,9 +611,7 @@ def get_data(identifier):
 
     """
     try:
-        global securityInfo  
-        
-        error_status, rapdu = gp.get_data(securityInfo, identifier)
+        error_status, rapdu = gp.get_data(identifier)
 
         __handle_error_status__(error_status, "get_data: ")  
 
@@ -633,9 +627,7 @@ def get_key_information():
         Get key information for the currently selected Application and log it through the logger.
     '''
     try:
-        global securityInfo    
-
-        error_status, key_information_templates = gp.get_key_information_template(securityInfo)
+        error_status, key_information_templates = gp.get_key_information_template()
 
         __handle_error_status__(error_status, "get_key_information: ")  
 
@@ -671,9 +663,8 @@ def get_cplc():
     try:
         global readername    # Needed to modify global copy of context
         global key_list    # Needed to modify global copy of context
-        global securityInfo    # Needed to modify global copy of context
         # Get data from card
-        error_status, cplc_data = gp.get_cplc_data(securityInfo)
+        error_status, cplc_data = gp.get_cplc_data()
         
         __handle_error_status__(error_status, "get_cplc: ")
         
@@ -732,10 +723,8 @@ def get_status_isd():
     """
 
     try:
-        global securityInfo
-
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status(securityInfo, '80' )
+        error_status, app_info_list =  gp.get_status('80' )
 
         __handle_error_status__(error_status, "get_status_isd: ")
 
@@ -755,10 +744,8 @@ def get_status_applications():
     
     """
     try:
-        global securityInfo
-
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status(securityInfo, '40' )
+        error_status, app_info_list =  gp.get_status('40' )
 
         __handle_error_status__(error_status, "get_status_applications: ")
 
@@ -777,10 +764,8 @@ def get_status_executable_load_files():
     
     """
     try:
-        global securityInfo
-
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status(securityInfo, '20' )
+        error_status, app_info_list =  gp.get_status('20' )
 
         __handle_error_status__(error_status, "get_status_executable_load_file: ")
 
@@ -799,10 +784,8 @@ def get_status_executable_load_files_and_modules():
 
     """
     try:
-        global securityInfo
-
         # 1. perform the install command 
-        error_status, app_info_list =  gp.get_status(securityInfo, '10' )
+        error_status, app_info_list =  gp.get_status('10' )
 
         __handle_error_status__(error_status, "get_status_executable_load_files_and_modules: ")
         if app_info_list != None:
@@ -822,14 +805,12 @@ def ls():
     
     """
     try:
-        global securityInfo
-
         # 1. perform the command
-        error_status, isd_info_list =  gp.get_status(securityInfo, '80' )
+        error_status, isd_info_list =  gp.get_status('80' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, app_info_list =  gp.get_status(securityInfo, '40' )
+        error_status, app_info_list =  gp.get_status('40' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, exefile_info_list =  gp.get_status(securityInfo, '10' )
+        error_status, exefile_info_list =  gp.get_status('10' )
         __handle_error_status__(error_status, "ls: ")
 
         if isd_info_list != None:
@@ -859,14 +840,12 @@ def get_crs_status(aid = None, tag_list = None):
 
     """
     try:
-        global securityInfo
-
         if aid == None: aid = '' 
         if tag_list == None: tag_list = '' 
             
 
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_crs_status(securityInfo, aid, tag_list)
+        error_status, app_info_list =  gp.get_crs_status(aid, tag_list)
 
         __handle_error_status__(error_status, "get_crs_status: ")
         if app_info_list != None:
@@ -902,7 +881,7 @@ def get_crs_status(aid = None, tag_list = None):
         raise
 
 
-def channel(logical_channel):
+def channel(logical_channel = None):
     """
         Selects the logical channel to use.
 
@@ -950,10 +929,8 @@ def get_certificate(key_version_number, key_identifier):
 
     """
     try:
-        global securityInfo
-
         # 1. perform the install command
-        error_status, rapdu =  gp.get_certificate(securityInfo, key_version_number, key_identifier)
+        error_status, rapdu =  gp.get_certificate(key_version_number, key_identifier)
 
         __handle_error_status__(error_status, "get_certificate: ")  
 
@@ -975,10 +952,8 @@ def perform_security_operation(key_version_number, key_identifier,certificate):
 
     """
     try:
-        global securityInfo
-
         # 1. perform the install command 
-        error_status =  gp.perform_security_operation(securityInfo, key_version_number, key_identifier, certificate )
+        error_status =  gp.perform_security_operation(key_version_number, key_identifier, certificate )
 
         __handle_error_status__(error_status, "perform_security_operation: ")  
 
@@ -1001,8 +976,6 @@ def internal_auth(key_version_number, key_identifier, crt_data , ePK_OCE_ECKA ):
 
     """
     try:
-        global securityInfo
-
         # 1. perform the internal authenticate command 
         error_status, rapdu =  gp.internal_authenticate(key_version_number,  key_identifier, crt_data , ePK_OCE_ECKA )
 
@@ -1030,8 +1003,6 @@ def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
 
     """
     try:
-        global securityInfo
-
         # 1. perform the internal authenticate command 
         error_status, rapdu =  gp.mutual_authenticate(key_version_number,  key_identifier, crt_data , ePK_OCE_ECKA )
 
@@ -1046,7 +1017,7 @@ def mutual_auth(key_version_number, key_identifier, crt_data, ePK_OCE_ECKA):
         
 def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None, keysetversion = '21', sequence_counter = "000000"):
     """
-        Performs an initializee update using specifiied key set and secure channel protocol.
+        Performs an initialize update using specifiied key set and secure channel protocol.
 
         :param str enc_key: The Session Encryption Key. If None (default) the off card repository key with the specified keyset number is used.
         :param str mac_key: The Secure Channel Message Authentication Code Key. If None (default) the off card repository key with the specified keyset number is used.
@@ -1061,8 +1032,7 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
     """
     try:
         global readername    
-        global securityInfo   
-    
+
         if enc_key == None:
             # get the key from the repository
             found_key_list = get_key_in_repository(keysetversion, "1")
@@ -1091,9 +1061,8 @@ def init_update(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi, sequence_counter )
+        error_status, hostCryptogram =  gp.initialize_update(keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi, sequence_counter )
         __handle_error_status__(error_status, "init_update: ")
-        securityInfo = security_Info_template
 
         return hostCryptogram
 
@@ -1122,10 +1091,9 @@ def ext_auth(hostCryptogram, securitylevel = SECURITY_LEVEL_NO_SECURE_MESSAGING)
     """
     try:
         global readername    
-        global securityInfo   
     
-        if securityInfo != None and hostCryptogram != None:
-            error_status =  gp.external_authenticate(securityInfo, securitylevel, hostCryptogram )
+        if hostCryptogram != None:
+            error_status =  gp.external_authenticate(securitylevel, hostCryptogram )
             __handle_error_status__(error_status, "ext_auth: ")
 
     except BaseException as e:
@@ -1160,7 +1128,6 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
     """
     try:
         global readername    
-        global securityInfo   
     
         if enc_key == None:
             # get the key from the repository
@@ -1190,12 +1157,11 @@ def auth(enc_key = None, mac_key = None, dek_key = None, scp = None, scpi = None
         base_key = None # ???
 
         # first init update:
-        error_status, security_Info_template, hostCryptogram =  gp.initialize_update(keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi , sequence_counter)
+        error_status, hostCryptogram =  gp.initialize_update(keysetversion, base_key, enc_key, mac_key, dek_key, scp, scpi , sequence_counter)
         __handle_error_status__(error_status, "auth: ")
-        securityInfo = security_Info_template
 
-        if security_Info_template != None and hostCryptogram != None:
-            error_status =  gp.external_authenticate(securityInfo, securitylevel, hostCryptogram )
+        if hostCryptogram != None:
+            error_status =  gp.external_authenticate(securitylevel, hostCryptogram )
             __handle_error_status__(error_status, "auth: ")
 
     except BaseException as e:
@@ -1219,9 +1185,8 @@ def extradite(security_domain_AID, application_aid, identification_number = None
     try:
         global readername    
         global key_list    
-        global securityInfo
 
-        error_status =  gp.extradite(securityInfo, security_domain_AID, application_aid, identification_number,  image_Number, application_provider_identifier, token_identifier, extraditeToken )
+        error_status =  gp.extradite(security_domain_AID, application_aid, identification_number,  image_Number, application_provider_identifier, token_identifier, extraditeToken )
 
         __handle_error_status__(error_status, "extradite: ")
 
@@ -1239,12 +1204,10 @@ def install_load(load_file_path, security_domain_aid ):
 
     '''
     try:
-        global securityInfo    
-
         # Verify the load File
         load_file_obj = loadfile.Loadfile(load_file_path)
 
-        error_status = gp.install_load(securityInfo, load_file_obj.get_aid(), security_domain_aid)
+        error_status = gp.install_load(load_file_obj.get_aid(), security_domain_aid)
 
         __handle_error_status__(error_status, "install_load: ")
 
@@ -1272,13 +1235,12 @@ def install(make_selectable, executable_LoadFile_AID, executable_Module_AID, app
     '''
     try:
         global readername    
-        global securityInfo
 
         # 1. managing privieges
         b_string_privilege = gp_utils.privilegesToBytes(application_privileges)
 
         # 2. perform the install command 
-        error_status =  gp.install_install(securityInfo, make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, b_string_privilege, application_specific_parameters, install_parameters, install_token )
+        error_status =  gp.install_install(make_selectable, executable_LoadFile_AID, executable_Module_AID, application_AID, b_string_privilege, application_specific_parameters, install_parameters, install_token )
 
         __handle_error_status__(error_status, "install: ")
 
@@ -1303,12 +1265,11 @@ def registry_update(security_domain_AID, application_aid, application_privileges
     try:
         global readername    
         global key_list    
-        global securityInfo
 
         # 1. managing privieges
         b_string_privilege = gp_utils.privilegesToBytes(application_privileges)
 
-        error_status =  gp.registry_update(securityInfo, security_domain_AID, application_aid, b_string_privilege,  registry_parameter_field, install_token )
+        error_status =  gp.registry_update(security_domain_AID, application_aid, b_string_privilege,  registry_parameter_field, install_token )
 
         __handle_error_status__(error_status, "registry_update: ")
 
@@ -1326,12 +1287,10 @@ def load_file(load_file_path, block_size = 32 ):
 
     '''
     try:
-        global securityInfo    
-
         # Verify the load File
         load_file_obj = loadfile.Loadfile(load_file_path)
 
-        error_status = gp.load_blocks(securityInfo, load_file_path, block_size)
+        error_status = gp.load_blocks(load_file_path, block_size)
 
         __handle_error_status__(error_status, "load_file: ")
 
@@ -1354,13 +1313,12 @@ def put_key(key_version_number, key_identifier = None, replace = False):
     try:
         global readername    
         global key_list    
-        global securityInfo
 
         # 1. get the key from the off card key repository
         key_list = get_key_in_repository(key_version_number, key_identifier)
         ( key_vn, key_id, key_type, key_value ) = key_list[0] 
         # 2. perform the put_key command 
-        error_status =  gp.put_key(securityInfo, key_version_number,key_identifier, key_type, key_value, replace )
+        error_status =  gp.put_key(key_version_number,key_identifier, key_type, key_value, replace )
 
         __handle_error_status__(error_status, "put_key: ")
 
@@ -1381,12 +1339,11 @@ def put_scp_key(key_version_number, replace = False):
     '''
     try:
         global readername    
-        global securityInfo
 
         # 1. get the keys from the off card key repository
         found_key_list = get_key_in_repository(key_version_number)
         # 2. perform the put_key command with the key_list 
-        error_status =  gp.put_scp_key(securityInfo, key_version_number, found_key_list, replace )
+        error_status =  gp.put_scp_key(key_version_number, found_key_list, replace )
 
         __handle_error_status__(error_status, "put_scp_key: ")
 
@@ -1395,19 +1352,19 @@ def put_scp_key(key_version_number, replace = False):
         raise
 
 
-def select(aid):
+def select(aid, channel = 0):
     '''
         Performs an application selection by its AID.
 
         :param str aid: The AID of the application to select
+        :param int channel: The logical channel number. If None (default) channel number 00 will be used.
 
     '''
     try:
         global readername    
         global key_list    
-        global securityInfo    
 
-        error_status = gp.select_application(aid)
+        error_status, rapdu = gp.select_application(aid, channel)
 
         __handle_error_status__(error_status, "select: ")
 
@@ -1424,9 +1381,7 @@ def delete(aid):
 
     '''
     try:
-        global securityInfo       
-
-        error_status = gp.delete_application(securityInfo, aid)
+        error_status = gp.delete_application(aid)
 
         __handle_error_status__(error_status, "delete: ")
 
@@ -1443,9 +1398,7 @@ def delete_package(aid):
 
     '''
     try:
-        global securityInfo       
-
-        error_status = gp.delete_package(securityInfo, aid)
+        error_status = gp.delete_package(aid)
 
         __handle_error_status__(error_status, "delete_package: ")
 
@@ -1465,9 +1418,7 @@ def delete_key(key_version_number, key_identifier):
 
     '''
     try:
-        global securityInfo       
-
-        error_status = gp.delete_key(securityInfo, key_version_number, key_identifier)
+        error_status = gp.delete_key(key_version_number, key_identifier)
 
         __handle_error_status__(error_status)
 
@@ -1486,9 +1437,8 @@ def send(apdu, raw_mode = False):
     try:
         global readername    
         global key_list    
-        global securityInfo    
 
-        error_status, rapdu =  gp.send_APDU(securityInfo, apdu, raw_mode)
+        error_status, rapdu =  gp.send_APDU(apdu, raw_mode)
 
         __handle_error_status__(error_status, "send: ")
 
@@ -1508,20 +1458,18 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
 
     '''
     try:
-        global securityInfo    
-
         # Verify the load File
         load_file_obj = loadfile.Loadfile(load_file_path)
 
-        error_status = gp.install_load(securityInfo, load_file_obj.get_aid(), security_domain_aid)
+        error_status = gp.install_load(load_file_obj.get_aid(), security_domain_aid)
 
         __handle_error_status__(error_status, "upload_install: ")
 
-        error_status = gp.load_blocks(securityInfo, load_file_path, block_size = 192)
+        error_status = gp.load_blocks(load_file_path, block_size = 192)
 
         __handle_error_status__(error_status, "upload_install: ")
 
-        error_status = gp.install_install(securityInfo, True, load_file_obj.get_aid(), executable_module_aid, application_aid)
+        error_status = gp.install_install(True, load_file_obj.get_aid(), executable_module_aid, application_aid)
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -1538,16 +1486,14 @@ def upload(load_file_path, security_domain_aid ):
         .. note:: The install for install command is not send by this function.  
     '''
     try:
-        global securityInfo    
-
         # Verify the load File
         load_file_obj = loadfile.Loadfile(load_file_path)
 
-        error_status = gp.install_load(securityInfo, load_file_obj.get_aid(), security_domain_aid)
+        error_status = gp.install_load(load_file_obj.get_aid(), security_domain_aid)
 
         __handle_error_status__(error_status, "upload: ")
 
-        error_status = gp.load_blocks(securityInfo, load_file_path, block_size = 32)
+        error_status = gp.load_blocks(load_file_path, block_size = 32)
 
         __handle_error_status__(error_status, "upload: ")
 
