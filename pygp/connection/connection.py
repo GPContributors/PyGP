@@ -54,12 +54,11 @@ def __check_card_info__():
         error_status = create_no_error_status(0x00)
     return error_status
 
-def create_card_info_dict(p_str_atr, p_byte_logicalChannel, p_str_specVersion, p_byte_protocol, p_handle_card):
+def create_card_info_dict(p_str_atr, p_str_specVersion, p_byte_protocol, p_handle_card):
     global card_info
 
     card_info = {}
     card_info['atr']  = p_str_atr 
-    card_info['logicalChannel']  = p_byte_logicalChannel 
     card_info['specVersion']  = p_str_specVersion 
     card_info['protocol']  = p_byte_protocol
     card_info['cardHandle']  = p_handle_card 
@@ -104,8 +103,10 @@ def getATR():
 
 
 
-def send_apdu(capdu):
+def send_apdu(bytelist_capdu):
     global connection_module
+
+    channelNum = (bytelist_capdu[0] & 0x3)
 
     error_status = __check_context__()
     if error_status['errorStatus'] != 0x00:
@@ -115,16 +116,10 @@ def send_apdu(capdu):
     if error_status['errorStatus'] != 0x00:
         return error_status
 
-    
-
-    #convert capdu from string to list of bytes
-    bytelist_capdu = toByteArray(capdu)
-    
-    # manage the selected channel
-    bytelist_capdu[0] |= card_info['logicalChannel']
     log_apdu(TO_CARD, bytelist_capdu)
     if card_info['protocol'] == SCARD_PROTOCOL_T1:
         error_status, rapdu = connection_module.send_apdu_T1(card_info, bytelist_capdu)
+        log_apdu(TO_READER, rapdu)
         return error_status, toHexString(rapdu)
     else:
         # T=0 management
@@ -154,7 +149,6 @@ def send_apdu(capdu):
                             ISO_case = CASE_4E
                         else:
                             pass
-
 
         if ISO_case == -1:
             # create the status structure
@@ -219,7 +213,7 @@ def send_apdu(capdu):
                     # resend the command with the rigth Le but keeping the first Le bytes ask by the user
                     
                     bytelist_capdu_getResponse = []
-                    bytelist_capdu_getResponse.append(0x00)
+                    bytelist_capdu_getResponse.append((0x00 | channelNum))
                     bytelist_capdu_getResponse.append(0xC0)
                     bytelist_capdu_getResponse.append(0x00)
                     bytelist_capdu_getResponse.append(0x00)
@@ -264,7 +258,7 @@ def send_apdu(capdu):
 
                     #send a get response with the good Le_to_send
                     bytelist_capdu_getResponse = []
-                    bytelist_capdu_getResponse.append(0x00)
+                    bytelist_capdu_getResponse.append((0x00 | channelNum))
                     bytelist_capdu_getResponse.append(0xC0)
                     bytelist_capdu_getResponse.append(0x00)
                     bytelist_capdu_getResponse.append(0x00)
