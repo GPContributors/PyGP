@@ -444,8 +444,6 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
     else:
         #convert capdu from string to list of bytes
         bytelist_capdu = toByteArray(c_wrapped_apdu)
-        # add channel number
-        bytelist_capdu[0] = (bytelist_capdu[0] | securityInfo[4])
         if raw_mode == False:
             # manage the selected logical channel
             bytelist_capdu[0] |= securityInfo[4]
