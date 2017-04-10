@@ -1373,15 +1373,16 @@ def select(aid, channel = 0):
         raise
 
 
-def delete(aid):
+def delete(aid, exsw = None):
     '''
         Performs an application deletion by its AID.
 
         :param str aid: The AID of the application to delete.
+        :param str exsw: Set expected Status word.
 
     '''
     try:
-        error_status = gp.delete_application(aid)
+        error_status = gp.delete_application(aid, exsw)
 
         __handle_error_status__(error_status, "delete: ")
 
@@ -1390,15 +1391,16 @@ def delete(aid):
         raise
 
 
-def delete_package(aid):
+def delete_package(aid, exsw = None):
     '''
         Performs a package and related application deletion by its AID.
 
         :param str aid: The AID of the package to delete.
+        :param str exsw: Set expected Status word.
 
     '''
     try:
-        error_status = gp.delete_package(aid)
+        error_status = gp.delete_package(aid, exsw)
 
         __handle_error_status__(error_status, "delete_package: ")
 
@@ -1407,18 +1409,19 @@ def delete_package(aid):
         raise
 
 
-def delete_key(key_version_number, key_identifier):
+def delete_key(key_version_number, key_identifier, exsw = None):
     '''
         Performs a key deletion identifies by its version number and its key identifier.
 
         :param str key_version_number: The key version number.
         :param str key_identifier: The key identifier.
+        :param str exsw: Set expected Status word.
 
         .. note:: The key is not deleted into the the off card key repository.  
 
     '''
     try:
-        error_status = gp.delete_key(key_version_number, key_identifier)
+        error_status = gp.delete_key(key_version_number, key_identifier, exsw)
 
         __handle_error_status__(error_status)
 

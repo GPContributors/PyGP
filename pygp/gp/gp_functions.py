@@ -444,7 +444,8 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
     else:
         #convert capdu from string to list of bytes
         bytelist_capdu = toByteArray(c_wrapped_apdu)
-
+        # add channel number
+        bytelist_capdu[0] = (bytelist_capdu[0] | securityInfo[4])
         if raw_mode == False:
             # manage the selected logical channel
             bytelist_capdu[0] |= securityInfo[4]
@@ -635,13 +636,13 @@ def set_crs_status(status_type, status_value, aid):
     return error_status, rapdu
 
 
-def delete_application(str_AID):
+def delete_application(str_AID, exsw):
     
     log_start("delete_application")
 
     capdu = "80 E4 00 00 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
@@ -652,13 +653,13 @@ def delete_application(str_AID):
     return error_status
 
 
-def delete_package(str_AID):
+def delete_package(str_AID, exsw):
     
     log_start("delete_package")
 
     capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_package", error_status['errorStatus'])
@@ -669,13 +670,13 @@ def delete_package(str_AID):
     return error_status
 
 
-def delete_key(KeyIdentifier, keyVersionNumber):
+def delete_key(KeyIdentifier, keyVersionNumber, exsw):
     
     log_start("delete_key")
 
     capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + lv('D2' + lv(keyVersionNumber))
     
-    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_key", error_status['errorStatus'])
