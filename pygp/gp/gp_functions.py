@@ -407,7 +407,7 @@ def unwrap_command(security_info, rapdu):
         return error_status, None
 
 
-def send_APDU(capdu, raw_mode = False): 
+def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None): 
 
     global securityInfo
     global last_apdu_response
@@ -471,10 +471,41 @@ def send_APDU(capdu, raw_mode = False):
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
     
     # check if it is an ISO7816 status word error
-    error_status = check_ISO7816_status_word(rapdu)
-
+    if exsw == None:
+        error_status = check_ISO7816_status_word(rapdu)
+    else:
+        # convert exsw to list, compare between expected status word and response.
+        # The format of exsw "9000, 6Cxx, 6xxx"
+        exsw = exsw.upper()
+        exsw = exsw.replace(',', ' ')
+        exsw = exsw.replace('X', 'F')
+        byte_list_exsw = toByteArray(exsw)
+        byte_list_sw = toByteArray(last_apdu_status)
+        found = False
+        for offset in range(0, len(byte_list_exsw), 2):
+            if ((byte_list_exsw[offset] & byte_list_sw[-2]) == byte_list_sw[-2]):
+                if ((byte_list_exsw[offset+1] & byte_list_sw[-1]) == byte_list_sw[-1]):
+                    # the status word is same as our expectation
+                    error_status = create_no_error_status(last_apdu_status)
+                    found = True
+        if found == False:
+            error_status = create_error_status(last_apdu_status, "Differ with expected status word")
+            log_error("expected status word " + exsw)
     #log_end("send_APDU", error_status['errorStatus'])
     
+    if (exdata != None) and (error_status['errorStatus'] == 0x00):
+        exdata = exdata.upper()
+        exdata = exdata.replace(' ', '')
+        for offset in range(0, len(exdata), 1):
+            if exdata[offset] == 'X':
+                continue
+            elif exdata[offset] == rapdu[offset].upper():
+                continue
+            else:
+                error_status = create_error_status(last_apdu_status, "Differ with expected data")
+                log_error("expected data " + exdata)
+                break
+
     return error_status, rapdu
     
 
@@ -610,7 +641,7 @@ def delete_application(str_AID):
 
     capdu = "80 E4 00 00 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
@@ -627,7 +658,7 @@ def delete_package(str_AID):
 
     capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_package", error_status['errorStatus'])
@@ -644,7 +675,7 @@ def delete_key(KeyIdentifier, keyVersionNumber):
 
     capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + lv('D2' + lv(keyVersionNumber))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = "6A88, 9000")
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_key", error_status['errorStatus'])

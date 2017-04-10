@@ -1427,18 +1427,20 @@ def delete_key(key_version_number, key_identifier):
         raise
 
 
-def send(apdu, raw_mode = False):
+def send(apdu, raw_mode = False, exsw = None, exdata = None):
     '''
         Sends an APDU Command according to the security level of the selected Security Domain
 
         :param str apdu: The apdu command.
         :param bool raw_mode: If True apdu is sent without security level management.
+        :param str exsw: Set expected Status word. exsw="6A88, 6982". There should be ',' as delimiter
+        :param str exdata: Set expected response data. It compare R-APDU with response data.
     '''
     try:
         global readername    
         global key_list    
 
-        error_status, rapdu =  gp.send_APDU(apdu, raw_mode)
+        error_status, rapdu =  gp.send_APDU(apdu, raw_mode, exsw, exdata)
 
         __handle_error_status__(error_status, "send: ")
 
