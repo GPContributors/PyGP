@@ -175,9 +175,9 @@ def set_log_mode(loggingMode, file_path = None):
     
     if (loggingMode & APDU_TIMING) == APDU_TIMING:
         # Display APDU timings
-        gp.apdu_timing(True)
+        gp.set_apdu_timing(True)
     else:     
-        gp.apdu_timing(False)
+        gp.set_apdu_timing(False)
 
 
 def set_payload_mode(activate):

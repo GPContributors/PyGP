@@ -47,7 +47,7 @@ def last_status():
     global last_apdu_status
     return last_apdu_status
 
-def apdu_timing(activated):
+def set_apdu_timing(activated):
     global apdu_timing
     apdu_timing = activated
 
