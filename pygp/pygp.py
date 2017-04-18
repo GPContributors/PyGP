@@ -349,6 +349,7 @@ def terminal(readerName = None):
                     error_status = conn.card_connect(str(readers.decode()), current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
+                        break
 
                 if readerName == None:
                     raise BaseException("Failed to connect, please check the card.")
