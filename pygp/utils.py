@@ -205,87 +205,103 @@ def increment(bytestr,value):
     return tmp_string
 
 
-def tlv_read(byteString):
-    
-    # remove space if any
-    import re
-    byteString = ''.join( re.split( '\W+', byteString.upper() ) )
-    
-    result = []
-    
-    tlv_tag = None
-    tlv_type = None
-    tlv_length = None
-    tlv_value = None
-    # create a byte array from the string
-    bytearray_str = toByteArray(byteString)
-    
-    # 1. check the tag
-    offset = 0x00 # used to manage offset into the array
-    # check the ber tvl type
-    if bytearray_str[offset] & 0x20  == 0x20 :
-        tlv_type = 0x01 # BERTLV_CONSTRUCTED
-    else:
-        tlv_type = 0x00 # BERTLV_PRIMITIVE
+TAG_TYPE_PRIMITIVE = 0x0
+TAG_TYPE_CONSTRUCTED = 0x1
 
-    # first byte is a tag or part of a tag
-    if  bytearray_str[offset] & 0x1F  == 0x1F :
-        # bits b5 to b1 of first byte set to 1 indicate Tag coded over more than 1 byte
-        if ( bytearray_str[offset + 1] & 0x80 ) == 0x80 :
-            # bit b8 of second byte set to 1 indicates Tag coded over more than 2 bytes
-            tlv_tag = toHexString(bytearray_str[:3])
-            offset = offset + 3
+TAG_SIZE_BIG_1 = 0x81
+TAG_SIZE_BIG_2 = 0x82
+
+def tlv_read(strResponse):
+    if strResponse == None:
+        return
+    
+    byte_list_data = toByteArray(strResponse)
+    data_len = len(byte_list_data)
+    i = 0
+    tlv_dic = {}
+    while i < data_len:
+        # Exception case.
+        # ECC CERT 7F49 <var> B0 <var> data, in this case, B0 is not contructed TLV tag
+        # SCRS Get CRS status, Tag 7F99 contain Wallet name. 7F99 is not contruncted TLV tag
+        if ((byte_list_data[i] == 0xB0) | \
+           ((byte_list_data[i] == 0x7F) & (byte_list_data[i+1] == 0x99))):
+           tag_type = TAG_TYPE_PRIMITIVE
         else:
-            tlv_tag = toHexString(bytearray_str[:2])
-            offset = offset + 2
-    else:
-        tlv_tag = toHexString(bytearray_str[:1])
-        offset = offset + 1
-    
-    # 2. check the length
-    if bytearray_str[offset] == 0x81 :
-        tlv_length = toHexString(bytearray_str[offset+1:offset + 2])
-        offset = offset + 2
-    elif bytearray_str[offset] == 0x82:
-        tlv_length = toHexString(bytearray_str[offset+1:offset + 3])
-        offset = offset + 3
-    elif bytearray_str[offset] == 0x83:
-        tlv_length = toHexString(bytearray_str[offset+1:offset + 4])
-        offset = offset + 4            
-    else:
-        tlv_length = intToHexString(bytearray_str[offset])
-        offset = offset + 1            
-    
-    # 3. check the value
-    length_as_int = int(tlv_length, 16)
-    tlv_dict = {}#collections.OrderedDict()
-    tlv_dict["T"] = tlv_tag
-    tlv_dict["L"] = tlv_length
-    
-    if tlv_type == 0x00:
-       
-        #tlv_dict["V"] = toHexString(bytearray_str[offset:offset + length_as_int])
-        #result.append(tlv_dict)
-        #if offset + length_as_int < len (bytearray_str):
-        #    result.append(tlv_read(toHexString(bytearray_str[offset + length_as_int:])))
-        result.append(toHexString(bytearray_str[offset:offset + length_as_int]))
-        tlv_dict["V"] = result
-        
-        
+            tag_type = (byte_list_data[i]&0b00100000)>>5    # Contructed or primitive
 
-    else:
-        #tlv_dict["V"] = tlv_read(toHexString(bytearray_str[offset:]))
-        #result.append(tlv_dict)
-        atlv_dict = tlv_read(toHexString(bytearray_str[offset:]))
-        result.append(atlv_dict)
-        dict_len = int(atlv_dict["L"], 16) + int(len(atlv_dict["T"])/2) + 1 # len(tag) + len(L) + len
-        if offset + dict_len < len (bytearray_str):
-            result.append(tlv_read(toHexString(bytearray_str[offset + dict_len:])))
+        # Get Tag
+        if byte_list_data[i]&0b00011111 == 0b00011111:
+            strTag = ("%-0.2X"%byte_list_data[i])
+            strTag += ("%-0.2X"%byte_list_data[i+1])
+            i += 2
+        else:
+            strTag = ("%-0.2X"%byte_list_data[i])
+            i += 1
 
-        tlv_dict["V"] = result
-    return tlv_dict
+        # Get Length
+        if byte_list_data[i] == TAG_SIZE_BIG_1:
+            length = byte_list_data[i+1]
+            i += 2
+        elif byte_list_data[i] == TAG_SIZE_BIG_2:
+            length = 256 * byte_list_data[i+1] + byte_list_data[i+2]
+            i += 3
+        else:
+            length = byte_list_data[i]
+            i += 1
 
+        # Get Value, to avoid out of range problem check the length.
+        if (i + length) > data_len:
+            value = byte_list_data[i:i+data_len]
+            #i += length
+            #strValue = toHexString(value)
+            print("ERROR???   " + toHexString(value))
+        else:
+            value = byte_list_data[i:i+length]
+            i += length
+            strValue = toHexString(value)
 
+        if tag_type == TAG_TYPE_CONSTRUCTED and length == len(value) and length > 2:
+            ret_dic = tlv_read(strValue)
+            # print(strTag)
+            if strTag in tlv_dic.keys():
+                # Key already exist in dictionary.
+                if type(tlv_dic[strTag]) == list:
+                    # list already exist, then just append the value at list
+                    tlv_dic[strTag].append(ret_dic)
+                # So add new value as a list.
+                else:
+                    saveDic = tlv_dic[strTag]
+                    tlv_dic[strTag] = [saveDic, ret_dic]
+            else:        
+                tlv_dic[strTag] = ret_dic
+        else:
+            # print(strTag + "  " + strValue)
+            if strTag in tlv_dic.keys():
+                # Key already exist in dictionary.
+                if type(tlv_dic[strTag]) == list:
+                    # list already exist, then just append the value at list
+                    tlv_dic[strTag].append(strValue)
+                # So add new value as a list.
+                else:
+                    prevValue = tlv_dic[strTag]
+                    tlv_dic[strTag] = [prevValue, strValue]
+            else:
+                tlv_dic[strTag] = strValue
 
-    
+    return tlv_dic
+
+def tlv_print(tlv_dic, indent = '  '):
+    for tag, value in tlv_dic.items():
+        if type(value) == dict:
+            print(indent + tag)
+            tlv_print(value, indent + '  ')
+        elif type(value) == list:
+            print(indent + tag)
+            for items in tlv_dic[tag]:
+                if type(items) == dict:
+                    tlv_print(items, indent + indent)
+                else:
+                    print(indent + indent + items)
+        elif type(value) == str:
+            print(indent + tag + ' ' + value)
  

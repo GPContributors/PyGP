@@ -854,7 +854,7 @@ def get_data(identifier):
     return error_status, rapdu
 
 
-def get_status(card_element):
+def get_status(card_element, targetAID = None, tags = None):
     
     log_start("get_status")
 
@@ -862,9 +862,18 @@ def get_status(card_element):
     # supress blank if any
     import re
     card_element = ''.join( re.split( '\W+', card_element.upper() ) )
-   
-    capdu = "80 F2 " + card_element + "02 02 4F 00" + "00"
-    
+
+    capdu_cmd = ""
+    if targetAID != None:
+        capdu_cmd = '4F' + lv(targetAID)
+    else:
+        capdu_cmd = '4F00'
+
+    if tags != None:
+        capdu_cmd = capdu_cmd + '5C' + lv(tags)
+
+    capdu = "80 F2 " + card_element + "02" + lv(capdu_cmd)
+
     error_status, rapdu = send_APDU(capdu)
     
     if error_status['errorStatus'] != 0x00:
@@ -877,7 +886,7 @@ def get_status(card_element):
         # check if more data available
         while last_status() == '6310':
             # send a get status next occurence
-            capdu = "80 F2 " + card_element + "03 02 4F 00" + "00"
+            capdu = "80 F2 " + card_element + "03" + lv(capdu_cmd)
             error_status, rapdu = send_APDU(capdu)
         
             if error_status['errorStatus'] != 0x00:
@@ -886,37 +895,13 @@ def get_status(card_element):
             
             card_response = card_response + last_response()
         
-        # we have the card_response TLV. create the get status response dictionnary
-        response_tlvs = TLVs(toByteArray(card_response))
-        app_info_list = []
-        app_aid = None
-        app_lifecycle = None
-        app_privileges = None
-        app_modules_aid = None
-
-        for response_tlv in response_tlvs.list_childs_tlv():
-            if response_tlv.getTAG() == 'E3':
-                # manage the list of TLV into this response_tlv
-                app_info_tlv_list = response_tlv.list_childs_tlv() 
-                for app_info in app_info_tlv_list:
-                    if app_info.getTAG() == '4F':
-                        app_aid = app_info.getValue()
-                    elif app_info.getTAG() == '9F70':
-                            app_lifecycle = app_info.getValue()
-                    elif app_info.getTAG() == 'C5':
-                            app_privileges = app_info.getValue()
-                    elif app_info.getTAG() == '84':
-                            app_modules_aid = app_info.getValue()
-                app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
     else:
         app_info_list = None
         error_status = create_no_error_status(0x00)
-
     
     log_end("get_status", error_status['errorStatus'])
 
-    return error_status, app_info_list
-
+    return error_status, card_response
 
 
 def get_crs_status(aid, tag_list):
@@ -1373,30 +1358,35 @@ def external_authenticate(security_level, host_cryptogram):
     log_end("external_authenticate", error_status['errorStatus'])
     return error_status
 
-def get_certificate(key_version_number, key_identifier):
-    log_start("get_certificate")
-    
-    error_status = __check_security_info__(securityInfo[securityInfo[4]])
-    if error_status['errorStatus'] != 0x00:
-        log_end("get_certificate", error_status['errorStatus'])
-        return error_status
+def get_casd_certificate():
+    log_start("get_sd_certificate")
     
     # build the APDU
-
-
-    get_certificate_apdu = '80 CA BF 21' + lv ('A6' + lv ( '83' + lv (key_version_number + key_identifier)))
+    get_casd_certificate_apdu = '80 CA 7F 21 00'
     
-    error_status, rapdu = send_APDU(get_certificate_apdu)
+    error_status, rapdu = send_APDU(get_casd_certificate_apdu)
 
     if error_status['errorStatus'] != 0x00:
-        log_end("get_certificate", error_status['errorStatus'])
+        log_end("get_casd_certificate", error_status['errorStatus'])
         return error_status, None
 
-        
-    log_end("get_certificate", error_status['errorStatus'])
-    return error_status, rapdu
+    log_end("get_casd_certificate", error_status['errorStatus'])
+    return error_status, last_response()
 
+def get_sd_certificate(key_version_number, key_identifier):
+    log_start("get_sd_certificate")
+    
+    # build the APDU
+    get_sd_certificate_apdu = '80 CA BF 21' + lv ('A6' + lv ( '83' + lv (key_identifier + key_version_number)))
+    
+    error_status, rapdu = send_APDU(get_sd_certificate_apdu)
 
+    if error_status['errorStatus'] != 0x00:
+        log_end("get_sd_certificate", error_status['errorStatus'])
+        return error_status, None
+
+    log_end("get_sd_certificate", error_status['errorStatus'])
+    return error_status, last_response()
 
 def perform_security_operation(key_version_number, key_identifier , crt_data ):
     

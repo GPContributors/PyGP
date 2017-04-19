@@ -725,14 +725,14 @@ def get_status_isd():
 
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('80' )
-
+        error_status, rsp =  gp.get_status('80' )
         __handle_error_status__(error_status, "get_status_isd: ")
+        app_info_dic = tlv_read(rsp)
 
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-            
+        app_info = app_info_dic['E3']
+        logger.log_info("Card Manager AID : %s (%s) (%s)" % \
+            (app_info['4F'].upper(), SD_LifeCycleState[app_info['9F70'][0:2]],\
+                gp_utils.bytesToPrivileges(app_info['C5']) ))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -746,14 +746,23 @@ def get_status_applications():
     """
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('40' )
-
+        error_status, rsp =  gp.get_status('40' )
         __handle_error_status__(error_status, "get_status_applications: ")
+        app_info_dic = tlv_read(rsp)
 
-        if app_info_list != None:
+        app_info_list = app_info_dic['E3']
+        if type(app_info_list) == list:
             for app_info in app_info_list:
-                logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-    
+                strAid = app_info['4F'].upper()
+                logger.log_info("Application AID : %s (%s) (%s) (%s)" % \
+                (strAid, Application_LifeCycleState[app_info['9F70'][0:2]], \
+                 gp_utils.bytesToPrivileges(app_info['C5']), DIC_AID.get(strAid, 'notfound') ))
+        else:
+            strAid = app_info['4F'].upper()
+            logger.log_info("Application AID : %s (%s) (%s) (%s)" % \
+            (strAid, Application_LifeCycleState[app_info['9F70'][0:2]], \
+                gp_utils.bytesToPrivileges(app_info['C5']), DIC_AID.get(strAid, 'notfound') ))
+
     except BaseException as e:
         logger.log_error(str(e))
         raise
@@ -766,13 +775,20 @@ def get_status_executable_load_files():
     """
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('20' )
-
+        error_status, rsp =  gp.get_status('20' )
         __handle_error_status__(error_status, "get_status_executable_load_file: ")
+        app_info_dic = tlv_read(rsp)
 
-        if app_info_list != None:
+        app_info_list = app_info_dic['E3']
+        if type(app_info_list) == list:
             for app_info in app_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
+                logger.log_info("Load file AID : %s (%s) (%s)" % \
+                    (app_info['4F'].upper(), ExecutableLoadFile_LifeCycleState[app_info['9F70'][0:2]], \
+                    DIC_AID.get(app_info['4F'].upper(), 'notfound')))
+        else:
+            logger.log_info("Load file AID : %s (%s) (%s)" % \
+                (app_info_list['4F'].upper(), ExecutableLoadFile_LifeCycleState[app_info_list['9F70'][0:2]], \
+                DIC_AID.get(app_info_list['4F'].upper(), 'notfound')))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -786,14 +802,36 @@ def get_status_executable_load_files_and_modules():
     """
     try:
         # 1. perform the install command 
-        error_status, app_info_list =  gp.get_status('10' )
-
+        error_status, rsp =  gp.get_status('10' )
         __handle_error_status__(error_status, "get_status_executable_load_files_and_modules: ")
-        if app_info_list != None:
+        app_info_dic = tlv_read(rsp)
+
+        app_info_list = app_info_dic['E3']
+        if type(app_info_list) == list:
             for app_info in app_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                if app_info['module_aid'] != None:
-                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                logger.log_info("Load file AID : %s (%s) (%s)" % \
+                    (app_info['4F'].upper(), ExecutableLoadFile_LifeCycleState[app_info['9F70'][0:2]], \
+                    DIC_AID.get(app_info['4F'].upper(), 'notfound')))
+                if '84' in app_info.keys():
+                    if type(app_info['84']) == str:
+                        logger.log_info("\tModule AID : %s (%s) " % \
+                        (app_info['84'].upper(), DIC_AID.get(app_info['84'].upper(), 'notfound')))
+                    elif type(app_info['84']) == list:
+                        for mods_aid in app_info['84']:
+                            logger.log_info("\tModule AID : %s (%s) " % \
+                            (mods_aid.upper(), DIC_AID.get(mods_aid.upper(), 'notfound')))
+        else:
+            logger.log_info("Load file AID : %s (%s) (%s)" % \
+                (app_info_list['4F'].upper(), ExecutableLoadFile_LifeCycleState[app_info_list['9F70'][0:2]], \
+                DIC_AID.get(app_info_list['4F'].upper(), 'notfound')))
+            if '84' in app_info_list.keys():
+                if type(app_info_list['84']) == str:
+                    logger.log_info("\tModule AID : %s (%s) " % \
+                    (app_info_list['84'].upper(), DIC_AID.get(app_info_list['84'].upper(), 'notfound')))
+                elif type(app_info_list['84']) == list:
+                    for mods_aid in app_info_list['84']:
+                        logger.log_info("\tModule AID : %s (%s) " % \
+                        (mods_aid.upper(), DIC_AID.get(mods_aid.upper(), 'notfound')))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -807,24 +845,42 @@ def ls():
     """
     try:
         # 1. perform the command
-        error_status, isd_info_list =  gp.get_status('80' )
+        error_status, rsp =  gp.get_status('80' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, app_info_list =  gp.get_status('40' )
+        isd_info_dic = tlv_read(rsp)
+        error_status, rsp =  gp.get_status('40' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, exefile_info_list =  gp.get_status('10' )
+        app_info_dic = tlv_read(rsp)
+        error_status, rsp =  gp.get_status('10' )
         __handle_error_status__(error_status, "ls: ")
+        exefile_info_dic = tlv_read(rsp)
 
-        if isd_info_list != None:
-            for app_info in isd_info_list:
-                logger.log_info("Card Manager AID : %s (%s) (%s)" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if app_info_list != None:
+        if isd_info_dic != None:
+            app_info = isd_info_dic['E3']
+            logger.log_info("Card Manager AID : %s (%s) (%s)" % \
+                (app_info['4F'].upper(), SD_LifeCycleState[app_info['9F70'][0:2]],\
+                    gp_utils.bytesToPrivileges(app_info['C5']) ))
+        if app_info_dic != None:
+            app_info_list = app_info_dic['E3']
             for app_info in app_info_list:
-                logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if exefile_info_list != None:        
-            for app_info in exefile_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                if app_info['module_aid'] != None:
-                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                strAid = app_info['4F'].upper()
+                logger.log_info("Application AID : %s (%s) (%s) (%s)" % \
+                (strAid, Application_LifeCycleState[app_info['9F70'][0:2]], \
+                 gp_utils.bytesToPrivileges(app_info['C5']), DIC_AID.get(strAid, 'notfound') ))
+        if exefile_info_dic != None:
+            app_info_list = exefile_info_dic['E3']
+            for app_info in app_info_list:
+                logger.log_info("Load file AID : %s (%s) (%s)" % \
+                 (app_info['4F'].upper(), ExecutableLoadFile_LifeCycleState[app_info['9F70'][0:2]], \
+                 DIC_AID.get(app_info['4F'].upper(), 'notfound')))
+                if '84' in app_info.keys():
+                    if type(app_info['84']) == str:
+                        logger.log_info("\tModule AID : %s (%s) " % \
+                        (app_info['84'].upper(), DIC_AID.get(app_info['84'].upper(), 'notfound')))
+                    elif type(app_info['84']) == list:
+                        for mods_aid in app_info['84']:
+                            logger.log_info("\tModule AID : %s (%s) " % \
+                            (mods_aid.upper(), DIC_AID.get(mods_aid.upper(), 'notfound')))
     
     except BaseException as e:
         logger.log_error(str(e))
@@ -919,7 +975,7 @@ def manage_channel(open_channel, logical_channel = None):
         logger.log_error(str(e))
         raise
 
-def get_certificate(key_version_number, key_identifier):    
+def get_sd_cert(key_version_number, key_identifier):    
     """
         Retrieves a CERT.SD.ECKA from the SD.
         
@@ -931,9 +987,9 @@ def get_certificate(key_version_number, key_identifier):
     """
     try:
         # 1. perform the install command
-        error_status, rapdu =  gp.get_certificate(key_version_number, key_identifier)
+        error_status, rapdu =  gp.get_sd_certificate(key_version_number, key_identifier)
 
-        __handle_error_status__(error_status, "get_certificate: ")  
+        __handle_error_status__(error_status, "get_sd_cert: ")  
 
         return rapdu
 
@@ -941,6 +997,33 @@ def get_certificate(key_version_number, key_identifier):
         logger.log_error(str(e))
         raise
 
+def get_casd_cert():
+    """
+        Retrieves a CERT from CASD
+        
+        :param none
+
+        :returns dictionary of certification.
+            How to access to dictionary.
+                dic_casd_cert['7F21'][0]['93'] -> return value of Tag 93 of first Certification.
+            How to check the existance of tag.
+                if '5F20' in cert['7F21'][0].keys():
+            How to use it
+                if '5F20' in cert['7F21'][0].keys():
+                    subjectIdentifier = cert['7F21'][0]['5F20']
+    """
+    try:
+        # 1. perform the install command
+        error_status, rapdu =  gp.get_casd_certificate()
+        __handle_error_status__(error_status, "get_casd_cert: ")  
+
+        # dic_casd_cert = tlv_read(rapdu)
+        # return dic_casd_cert
+        return rapdu
+
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
 
 def perform_security_operation(key_version_number, key_identifier,certificate):
     """
@@ -1506,4 +1589,3 @@ def upload(load_file_path, security_domain_aid ):
     except BaseException as e:
         logger.log_error(str(e))
         raise
-
