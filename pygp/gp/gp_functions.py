@@ -47,7 +47,7 @@ def last_status():
     global last_apdu_status
     return last_apdu_status
 
-def apdu_timing(activated):
+def set_apdu_timing(activated):
     global apdu_timing
     apdu_timing = activated
 
@@ -407,7 +407,7 @@ def unwrap_command(security_info, rapdu):
         return error_status, None
 
 
-def send_APDU(capdu, raw_mode = False): 
+def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None): 
 
     global securityInfo
     global last_apdu_response
@@ -444,7 +444,6 @@ def send_APDU(capdu, raw_mode = False):
     else:
         #convert capdu from string to list of bytes
         bytelist_capdu = toByteArray(c_wrapped_apdu)
-
         if raw_mode == False:
             # manage the selected logical channel
             bytelist_capdu[0] |= securityInfo[4]
@@ -471,10 +470,41 @@ def send_APDU(capdu, raw_mode = False):
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
     
     # check if it is an ISO7816 status word error
-    error_status = check_ISO7816_status_word(rapdu)
-
+    if exsw == None:
+        error_status = check_ISO7816_status_word(rapdu)
+    else:
+        # convert exsw to list, compare between expected status word and response.
+        # The format of exsw "9000, 6Cxx, 6xxx"
+        exsw = exsw.upper()
+        exsw = exsw.replace(',', ' ')
+        exsw = exsw.replace('X', 'F')
+        byte_list_exsw = toByteArray(exsw)
+        byte_list_sw = toByteArray(last_apdu_status)
+        found = False
+        for offset in range(0, len(byte_list_exsw), 2):
+            if ((byte_list_exsw[offset] & byte_list_sw[-2]) == byte_list_sw[-2]):
+                if ((byte_list_exsw[offset+1] & byte_list_sw[-1]) == byte_list_sw[-1]):
+                    # the status word is same as our expectation
+                    error_status = create_no_error_status(last_apdu_status)
+                    found = True
+        if found == False:
+            error_status = create_error_status(last_apdu_status, "Differ with expected status word")
+            log_error("expected status word " + exsw)
     #log_end("send_APDU", error_status['errorStatus'])
     
+    if (exdata != None) and (error_status['errorStatus'] == 0x00):
+        exdata = exdata.upper()
+        exdata = exdata.replace(' ', '')
+        for offset in range(0, len(exdata), 1):
+            if exdata[offset] == 'X':
+                continue
+            elif exdata[offset] == rapdu[offset].upper():
+                continue
+            else:
+                error_status = create_error_status(last_apdu_status, "Differ with expected data")
+                log_error("expected data " + exdata)
+                break
+
     return error_status, rapdu
     
 
@@ -535,28 +565,13 @@ def select_application(str_AID, logical_channel = 0):
     if error_status['errorStatus'] != ERROR_STATUS_SUCCESS:
         log_end("select_application", error_status['errorStatus'])
         return error_status, None
-    
-    if payload_mode_activated == False:
-        # no error so the application is selected. now store its aid
-        response_tlv = TLV(toByteArray(last_response()))
-
-        # check the tag
-        if response_tlv.getTAG() != '6F':
-            error_status = create_error_status(ERROR_INVALID_RESPONSE_DATA, runtimeErrorDict[ERROR_INVALID_RESPONSE_DATA])
-            return error_status, None
-        
-        for response_tlv in response_tlv.list_childs_tlv():
-            if response_tlv.getTAG() == '84':
-                current_selected_aid = response_tlv.getValue()
-    else:
-        current_selected_aid = str_AID
 
     # there is no error. Do initialize securityInfo of selected channel
     securityInfo[4] = logical_channel
     securityInfo[logical_channel] = {}
     securityInfo[logical_channel]['securityLevel'] = SECURITY_LEVEL_NO_SECURE_MESSAGING
     securityInfo[logical_channel]['channelStatus'] = "ON"
-    securityInfo[logical_channel]['selectedAID'] = current_selected_aid
+    securityInfo[logical_channel]['selectedAID'] = str_AID
     log_end("select_application", error_status['errorStatus'])
 
     return error_status, rapdu
@@ -604,13 +619,13 @@ def set_crs_status(status_type, status_value, aid):
     return error_status, rapdu
 
 
-def delete_application(str_AID):
+def delete_application(str_AID, exsw):
     
     log_start("delete_application")
 
     capdu = "80 E4 00 00 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("select_application", error_status['errorStatus'])
@@ -621,13 +636,13 @@ def delete_application(str_AID):
     return error_status
 
 
-def delete_package(str_AID):
+def delete_package(str_AID, exsw):
     
     log_start("delete_package")
 
     capdu = "80 E4 00 80 " + lv ('4F' + lv(str_AID))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_package", error_status['errorStatus'])
@@ -638,13 +653,13 @@ def delete_package(str_AID):
     return error_status
 
 
-def delete_key(KeyIdentifier, keyVersionNumber):
+def delete_key(KeyIdentifier, keyVersionNumber, exsw):
     
     log_start("delete_key")
 
     capdu = "80 E4 00 00 " + lv('D0' + lv(KeyIdentifier)) + lv('D2' + lv(keyVersionNumber))
     
-    error_status, rapdu = send_APDU(capdu)
+    error_status, rapdu = send_APDU(capdu, exsw = exsw)
 
     if error_status['errorStatus'] != 0x00:
         log_end("delete_key", error_status['errorStatus'])
@@ -839,7 +854,7 @@ def get_data(identifier):
     return error_status, rapdu
 
 
-def get_status(card_element):
+def get_status(card_element, targetAID = None, tags = None):
     
     log_start("get_status")
 
@@ -847,9 +862,18 @@ def get_status(card_element):
     # supress blank if any
     import re
     card_element = ''.join( re.split( '\W+', card_element.upper() ) )
-   
-    capdu = "80 F2 " + card_element + "02 02 4F 00" + "00"
-    
+
+    capdu_cmd = ""
+    if targetAID != None:
+        capdu_cmd = '4F' + lv(targetAID)
+    else:
+        capdu_cmd = '4F00'
+
+    if tags != None:
+        capdu_cmd = capdu_cmd + '5C' + lv(tags)
+
+    capdu = "80 F2 " + card_element + "02" + lv(capdu_cmd)
+
     error_status, rapdu = send_APDU(capdu)
     
     if error_status['errorStatus'] != 0x00:
@@ -862,7 +886,7 @@ def get_status(card_element):
         # check if more data available
         while last_status() == '6310':
             # send a get status next occurence
-            capdu = "80 F2 " + card_element + "03 02 4F 00" + "00"
+            capdu = "80 F2 " + card_element + "03" + lv(capdu_cmd)
             error_status, rapdu = send_APDU(capdu)
         
             if error_status['errorStatus'] != 0x00:
@@ -871,37 +895,13 @@ def get_status(card_element):
             
             card_response = card_response + last_response()
         
-        # we have the card_response TLV. create the get status response dictionnary
-        response_tlvs = TLVs(toByteArray(card_response))
-        app_info_list = []
-        app_aid = None
-        app_lifecycle = None
-        app_privileges = None
-        app_modules_aid = None
-
-        for response_tlv in response_tlvs.list_childs_tlv():
-            if response_tlv.getTAG() == 'E3':
-                # manage the list of TLV into this response_tlv
-                app_info_tlv_list = response_tlv.list_childs_tlv() 
-                for app_info in app_info_tlv_list:
-                    if app_info.getTAG() == '4F':
-                        app_aid = app_info.getValue()
-                    elif app_info.getTAG() == '9F70':
-                            app_lifecycle = app_info.getValue()
-                    elif app_info.getTAG() == 'C5':
-                            app_privileges = app_info.getValue()
-                    elif app_info.getTAG() == '84':
-                            app_modules_aid = app_info.getValue()
-                app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
     else:
         app_info_list = None
         error_status = create_no_error_status(0x00)
-
     
     log_end("get_status", error_status['errorStatus'])
 
-    return error_status, app_info_list
-
+    return error_status, card_response
 
 
 def get_crs_status(aid, tag_list):
@@ -1024,7 +1024,6 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
         
     global last_apdu_response
     global last_apdu_status
-    global current_selected_aid
     global payload_mode_activated
 
     log_start("initialize_update")
@@ -1062,7 +1061,7 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
         elif security_info['secureChannelProtocol'] == GP_SCP03:
             # manage init update response
             sequenceCounter = increment(sequence_counter, 0x01)
-            cardChallenge = calculate_card_challenge_SCP03(sequenceCounter + current_selected_aid, enc_key)
+            cardChallenge = calculate_card_challenge_SCP03(sequenceCounter + security_info['selectedAID'], enc_key)
             # type coherency
             cardChallenge = toByteArray(cardChallenge)
             sequenceCounter= toByteArray(sequenceCounter)
@@ -1193,7 +1192,7 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
             security_info['dataEncryptionSessionKey'] = create_session_key_SCP02(dek_key, KDEK_TYPE, toHexString(sequenceCounter))
 
             if payload_mode_activated == True:
-                cardChallenge  = self.calculate_card_challenge_SCP02(current_selected_aid, security_info['C_MACSessionKey'])
+                cardChallenge  = self.calculate_card_challenge_SCP02(security_info['selectedAID'], security_info['C_MACSessionKey'])
                 # type coherency
                 cardChallenge = int(cardChallenge, 16)
             
@@ -1359,30 +1358,35 @@ def external_authenticate(security_level, host_cryptogram):
     log_end("external_authenticate", error_status['errorStatus'])
     return error_status
 
-def get_certificate(key_version_number, key_identifier):
-    log_start("get_certificate")
-    
-    error_status = __check_security_info__(securityInfo[securityInfo[4]])
-    if error_status['errorStatus'] != 0x00:
-        log_end("get_certificate", error_status['errorStatus'])
-        return error_status
+def get_casd_certificate():
+    log_start("get_sd_certificate")
     
     # build the APDU
-
-
-    get_certificate_apdu = '80 CA BF 21' + lv ('A6' + lv ( '83' + lv (key_version_number + key_identifier)))
+    get_casd_certificate_apdu = '80 CA 7F 21 00'
     
-    error_status, rapdu = send_APDU(get_certificate_apdu)
+    error_status, rapdu = send_APDU(get_casd_certificate_apdu)
 
     if error_status['errorStatus'] != 0x00:
-        log_end("get_certificate", error_status['errorStatus'])
+        log_end("get_casd_certificate", error_status['errorStatus'])
         return error_status, None
 
-        
-    log_end("get_certificate", error_status['errorStatus'])
-    return error_status, rapdu
+    log_end("get_casd_certificate", error_status['errorStatus'])
+    return error_status, last_response()
 
+def get_sd_certificate(key_version_number, key_identifier):
+    log_start("get_sd_certificate")
+    
+    # build the APDU
+    get_sd_certificate_apdu = '80 CA BF 21' + lv ('A6' + lv ( '83' + lv (key_identifier + key_version_number)))
+    
+    error_status, rapdu = send_APDU(get_sd_certificate_apdu)
 
+    if error_status['errorStatus'] != 0x00:
+        log_end("get_sd_certificate", error_status['errorStatus'])
+        return error_status, None
+
+    log_end("get_sd_certificate", error_status['errorStatus'])
+    return error_status, last_response()
 
 def perform_security_operation(key_version_number, key_identifier , crt_data ):
     

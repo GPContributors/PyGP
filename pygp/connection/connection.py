@@ -229,6 +229,37 @@ def send_apdu(bytelist_capdu):
                     
                     # return all the card response
                     return error_status, toHexString(bytelist_rapdu)
+                # status word: 6100
+                elif bytelist_rapdu[-2] == 0x61 and bytelist_rapdu[-1] == 0x00: 
+                    rapdu_all = bytelist_rapdu[:-2]
+                    while(True):
+                        # resend the command with the rigth Le 
+                        bytelist_capdu_getResponse = []
+                        bytelist_capdu_getResponse.append((0x00 | channelNum))
+                        bytelist_capdu_getResponse.append(0xC0)
+                        bytelist_capdu_getResponse.append(0x00)
+                        bytelist_capdu_getResponse.append(0x00)
+                        bytelist_capdu_getResponse.append(bytelist_rapdu[-1])
+                        # perform a get response with the Le ask by the user
+                        log_management_apdu(TO_CARD, bytelist_capdu_getResponse)
+                        error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu_getResponse)
+                        log_management_apdu(TO_READER,bytelist_rapdu)
+                        log_apdu(TO_READER, bytelist_rapdu)
+                        
+
+                        if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
+                            return error_status, ''
+                        
+                        # return all the card response and status word
+                        if bytelist_rapdu[-2] != 0x61:
+                            rapdu_all += bytelist_rapdu
+                            return error_status, toHexString(rapdu_all)
+                        # save the response without status word and send get response command with Le
+                        else:
+                            rapdu_all += bytelist_rapdu[:-2]
+                        
+                    # return all the card response
+                    return error_status, toHexString(bytelist_rapdu)
                 else:
                     # return all the card response
                     log_apdu(TO_READER, bytelist_rapdu)
