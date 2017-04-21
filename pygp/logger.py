@@ -4,7 +4,7 @@ import unicodedata
 import string
 
 # create the global logger
-logger = logging.getLogger()
+logger = logging.getLogger('PyGP')
 
 # global variable for logging
 apdu_logging = False
