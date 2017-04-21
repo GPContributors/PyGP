@@ -810,7 +810,7 @@ def RSA_signature(message, private_key, padding_algorithm = 'PKCS1', hash_algori
     if padding_algorithm == 'PKCS1':
         pad = padding.PKCS1v15()
     elif padding_algorithm == 'PSS':
-        pad = padding.PSS(padding.MGF1(hashes.SHA256()), padding.PSS.PSS.MAX_LENGTH)
+        pad = padding.PSS(padding.MGF1(hashes.SHA256()), padding.PSS.MAX_LENGTH)
     elif padding_algorithm == 'OEAP':
         pad = hashes.OEAP(padding.MGF1(hashes.SHA256()), hashes.SHA256(), None)
     
@@ -865,7 +865,7 @@ def RSA_verify( message, signature, public_key, padding_algorithm= 'PKCS1', hash
     if padding_algorithm == 'PKCS1':
         pad = padding.PKCS1v15()
     elif padding_algorithm == 'PSS':
-        pad = padding.PSS(padding.MGF1(hashes.SHA256()), padding.PSS.PSS.MAX_LENGTH)
+        pad = padding.PSS(padding.MGF1(hashes.SHA256()), padding.PSS.MAX_LENGTH)
     elif padding_algorithm == 'OEAP':
         pad = hashes.OEAP(padding.MGF1(hashes.SHA256()), hashes.SHA256(), None)
     
