@@ -47,7 +47,7 @@ def last_status():
     global last_apdu_status
     return last_apdu_status
 
-def apdu_timing(activated):
+def set_apdu_timing(activated):
     global apdu_timing
     apdu_timing = activated
 
@@ -1055,7 +1055,6 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
         
     global last_apdu_response
     global last_apdu_status
-    global current_selected_aid
     global payload_mode_activated
 
     log_start("initialize_update")
@@ -1093,7 +1092,7 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
         elif security_info['secureChannelProtocol'] == GP_SCP03:
             # manage init update response
             sequenceCounter = increment(sequence_counter, 0x01)
-            cardChallenge = calculate_card_challenge_SCP03(sequenceCounter + current_selected_aid, enc_key)
+            cardChallenge = calculate_card_challenge_SCP03(sequenceCounter + security_info['selectedAID'], enc_key)
             # type coherency
             cardChallenge = toByteArray(cardChallenge)
             sequenceCounter= toByteArray(sequenceCounter)
@@ -1224,7 +1223,7 @@ def initialize_update(key_set_version , base_key, enc_key , mac_key , dek_key , 
             security_info['dataEncryptionSessionKey'] = create_session_key_SCP02(dek_key, KDEK_TYPE, toHexString(sequenceCounter))
 
             if payload_mode_activated == True:
-                cardChallenge  = self.calculate_card_challenge_SCP02(current_selected_aid, security_info['C_MACSessionKey'])
+                cardChallenge  = self.calculate_card_challenge_SCP02(security_info['selectedAID'], security_info['C_MACSessionKey'])
                 # type coherency
                 cardChallenge = int(cardChallenge, 16)
             
