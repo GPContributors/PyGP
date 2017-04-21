@@ -175,9 +175,9 @@ def set_log_mode(loggingMode, file_path = None):
     
     if (loggingMode & APDU_TIMING) == APDU_TIMING:
         # Display APDU timings
-        gp.apdu_timing(True)
+        gp.set_apdu_timing(True)
     else:     
-        gp.apdu_timing(False)
+        gp.set_apdu_timing(False)
 
 
 def set_payload_mode(activate):
@@ -349,6 +349,7 @@ def terminal(readerName = None):
                     error_status = conn.card_connect(str(readers.decode()), current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
                         readerName = readers.decode()
+                        break
 
                 if readerName == None:
                     raise BaseException("Failed to connect, please check the card.")
