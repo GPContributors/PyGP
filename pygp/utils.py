@@ -13,6 +13,51 @@ def remove_space(bytestring):
     bytestring = ''.join( re.split( '\W+', bytestring.upper() ) )
     return bytestring
 
+def check_expected_data(data, expected_data):
+    """
+        Returns True if the data and expected_data are the same.
+        
+        :param str data: a hexadecimal string
+        
+        :param str expected_data: a hexadecimal string or a string with a list of hexadecimal string with , as separator ("9000, 6Cxx, 6xxx")
+
+        :returns: bool : True if data matches with the expected data, False otherwize
+
+        .. note:: The character X or x could be set into expected data as a wildcard value
+
+        
+    """
+
+	# remove space is any, and set to upper string
+    data = remove_space(data)
+	# detect if multiple expected data is set
+    import re
+    listOfData = re.split( ',', expected_data )
+
+    for aData in range(len(listOfData)):
+        expected = listOfData[aData]
+        expected = remove_space(expected)
+        import re
+        expected = ''.join(re.split('\W+', expected.upper()))
+        DataCheckOK = True
+        
+        if (len (expected) != len (data)):
+            DataCheckOK &= False
+            
+        else:
+            for i in range(len(data)):
+                if i < len (expected):
+                    if (data[i] != expected[i] and expected[i] != 'X'):
+                        DataCheckOK &= False
+            
+            # no need to continue to the next value, data is verified
+            if DataCheckOK == True:
+                return DataCheckOK               
+        
+    return DataCheckOK
+	
+	
+
 def toByteArray(byteString):
     """
         Returns a list of bytes from a byte string
@@ -96,7 +141,7 @@ def lv(bytestring):
 
             # get the string preceded by its length
             astr = "3B65000  09C11 0101 03"
-            lv(astr) # returns  "093B65000 09C11010103"
+            lv(astr) # returns  "093B6500009C11010103"
         
 
     '''
@@ -134,24 +179,24 @@ def intToHexString(intValue, len = 1):
     return stringValue.upper()
 
 
-def getLength(bytestr, len = 1):
+def getLength(bytestr, length = 1):
     '''
         Returns a string representing the length of the string as parameter on numberOfBytes bytes
 
         :param str bytestr: a hexadecimal string
-        :param int len: the number of byte expected for the string
+        :param int length: the number of byte expected for the string
         
         ::
 
             getLength("A0A40002", 2) # returns "0004"
-            getLength("A0A40002", 1) # returns "02"
+            getLength("A0A40002", 1) # returns "04"
 
             
     '''
     import re
     bytestr = ''.join( re.split( '\W+', bytestr.upper() ) )
-    length = int(len(bytestr)/2)
-    return intToHexString(length,len)
+    bytestr_length = int((len(bytestr)/2))
+    return intToHexString(bytestr_length,length)
 
 
 
