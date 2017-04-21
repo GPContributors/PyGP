@@ -74,9 +74,11 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    package_data={
-        'pygp': ['pygp/connection/pcsc/_scard.cp35-win32.pyd','pygp/connection/pcsc/_scard.pyd'],
-    },
+    #package_data={
+    #    'pygp': ['pygp/connection/pcsc/_scard.cp35-win32.pyd','pygp/connection/pcsc/_scard.pyd'],
+    #},
+    
+    ext_package="pygp.connection.pcsc",
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
