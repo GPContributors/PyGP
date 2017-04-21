@@ -138,8 +138,10 @@ ERROR_NO_CARD_CONTEXT_INITIALIZED           = '80301008' #!< A card context must
 ERROR_NO_CARD_INFO_INITIALIZED              = '80301009' #!< A card connection must be established first.
 ERROR_NO_SECURITY_INFO_INITIALIZED          = '8030100A' #!< A mutual authentication must be established first.
 ERROR_VALIDATION_R_MAC                      = '8030100B' #!< The validation of the R-MAC has failed.
-INVALID_LOGICAL_CHANNEL_NUMBER              = '80001000' #!< Invalid logical channel number.
 ERROR_INCONSISTENT_SEQUENCE_COUNTER         = '8030100C' #!< The Sequence counter has an invalid length
+
+INVALID_LOGICAL_CHANNEL_NUMBER              = '80001000' #!< Invalid logical channel number.
+ERROR_LOGICAL_CHANNEL_NOT_AVAILABLE         = '80001001' #!< logical channel is not available.
 
 runtimeErrorDict = {
     ERROR_UNRECOGNIZED_APDU_COMMAND: "A APDU command can't be recognized as a valid T=0 protocol Case 1-4 ISO7816-4 APDU",
@@ -156,7 +158,8 @@ runtimeErrorDict = {
     ERROR_VALIDATION_R_MAC: "The validation of the R-MAC has failed.",
     ERROR_INCONSISTENT_SEQUENCE_COUNTER: "The Sequence counter has an invalid length.",
 
-    INVALID_LOGICAL_CHANNEL_NUMBER: "Invalid logical channel number"
+    INVALID_LOGICAL_CHANNEL_NUMBER: "Invalid logical channel number",
+    ERROR_LOGICAL_CHANNEL_NOT_AVAILABLE: "Target logical channel is not available.",
 }
 
 def create_no_error_status(retCode):

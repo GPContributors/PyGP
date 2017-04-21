@@ -55,7 +55,7 @@ def card_connect(card_context, reader_name, protocol):
     # create the status structure
     error_status = handle_retCode(retCode)
     
-    card_info = pygp.connection.connection.create_card_info_dict(toHexString(atr), 0x00, "", protocol, hcard)
+    card_info = pygp.connection.connection.create_card_info_dict(toHexString(atr), "", protocol, hcard)
     
     return error_status, card_info
     

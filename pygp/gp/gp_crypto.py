@@ -40,9 +40,9 @@ def calculate_card_challenge_SCP02(data, key):
     :param data (str): Data uses to calculate card challenge.
     :param key (str) : The Secure Channel Message Authentication Code Key.
 
-	:returns: (tuple): tuple containing:
-			- class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
-			- The card challenge (str) if no error occurs, None otherwize.
+    :returns: (tuple): tuple containing:
+            - class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
+            - The card challenge (str) if no error occurs, None otherwize.
     '''
     logger.log_start("calculate_card_challenge_SCP02")
     
@@ -65,9 +65,9 @@ def calculate_card_challenge_SCP03(data, key):
     :param data (str): Data uses to calculate card challenge.
     :param key (str) : The Secure Channel Message Authentication Code Key.
 
-	:returns: (tuple): tuple containing:
-			- class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
-			- The card challenge (str) if no error occurs, None otherwize.
+    :returns: (tuple): tuple containing:
+            - class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
+            - The card challenge (str) if no error occurs, None otherwize.
     '''
     logger.log_start("calculate_card_challenge_SCP03")
     
@@ -101,9 +101,9 @@ def calculate_card_cryptogram_SCP02(sequenceCounter, cardChallenge, hostChalleng
     :param hostChallenge (str): The host challenge.
     :param session_enc_key (str) : The Session Encryption Key for calculating the card cryptogram.
 
-	:returns: (tuple): tuple containing:
-			- class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
-			- The card cryptogram (str) if no error occurs, None otherwize.
+    :returns: (tuple): tuple containing:
+            - class:`ErrorStatus` with error status ERROR_STATUS_SUCCESS if no error occurs, otherwise error code and error message are contained in the class :class:`ErrorStatus`.
+            - The card cryptogram (str) if no error occurs, None otherwize.
     
 
     '''
@@ -137,7 +137,7 @@ def calculate_card_cryptogram_SCP03(cardChallenge, hostChallenge, session_mac_ke
     :param hostChallenge (str): The host challenge.
     :param key (str) : The Secure Channel Message Authentication Code Key.
 
-	:returns: str: The card cryptogram if no error occurs, None otherwize.
+    :returns: str: The card cryptogram if no error occurs, None otherwize.
     
 
     '''
@@ -239,7 +239,7 @@ def encipher_data_SCP02(data, key, iv):
     :param str key : A 3DES key used to encipher 
     :param str iv : The initial chaining vector
 
-	:returns: (str): The enciphered data
+    :returns: (str): The enciphered data
     '''
     data = crypto.ISO_9797_M2_Padding(data, 8)
     return crypto.DES3_CBC(data, key, iv)
@@ -253,7 +253,7 @@ def encipher_data_SCP03(data, key, iv):
     :param str key : A AES key used to encipher 
     :param str iv : The initial chaining vector
 
-	:returns: (str): The enciphered data
+    :returns: (str): The enciphered data
     '''
     data = crypto.ISO_9797_M2_Padding(data, 8)
     return crypto.AES_CBC(data, key, iv)
@@ -266,7 +266,7 @@ def decipher_data_SCP03(data, key, iv):
     :param str key : A AES key used to encipher 
     :param str iv : The initial chaining vector
 
-	:returns: (str): The deciphered data
+    :returns: (str): The deciphered data
     '''
     data = crypto.AES_INV_CBC(data, key, iv)
     return data
@@ -278,7 +278,7 @@ def encipher_iv_SCP02(data, key):
     :param str data : The message to authenticate.
     :param str key : A 3DES key used to encipher 
 
-	:returns: (str): The enciphered iv
+    :returns: (str): The enciphered iv
     '''
     return crypto.DES_ECB(data, key)
 
@@ -289,7 +289,7 @@ def encipher_iv_SCP03(data, key):
     :param str data : The message to authenticate.
     :param str key : A AES key used to encipher 
 
-	:returns: (str): The enciphered iv
+    :returns: (str): The enciphered iv
     '''
     return crypto.AES_CBC(data, key)
 
@@ -301,7 +301,7 @@ def calculate_mac_SCP02(data, key, iv):
     :param str key : A 3DES key used to sign 
     :param str iv : The initial chaining vector
 
-	:returns: (str): The calculated MAC
+    :returns: (str): The calculated MAC
     '''
     # padd data if needed
     data = crypto.ISO_9797_M2_Padding(data, 8)
@@ -316,7 +316,7 @@ def calculate_mac_SCP03(data, key, iv):
     :param str key : A 3DES key used to sign 
     :param str iv : The initial chaining vector
 
-	:returns: (str): The calculated MAC
+    :returns: (str): The calculated MAC
     '''
     input_data = iv + data
 
@@ -332,7 +332,7 @@ def cipher_key_SCP02(key_value, key):
     :param str key : A 3DES key used to sign 
 
 
-	:returns: (str): The ciphered key with its key check value
+    :returns: (str): The ciphered key with its key check value
     '''
     
     cipher_key = crypto.DES3_ECB(key_value, key)
@@ -349,7 +349,7 @@ def cipher_key_SCP03(key_value, key):
     :param str key : A AES key used to sign 
 
 
-	:returns: (str): The ciphered key with its key check value
+    :returns: (str): The ciphered key with its key check value
     '''
     
     cipher_key = crypto.AES_CBC(key_value, key, crypto.ICV_NULL_16)
@@ -366,7 +366,7 @@ def create_session_key_SCP02(key, k_type, sequenceCounter ):
     :param str k_type : The key type of the key. 
     :param str sequenceCounter: The sequence counter.
 
-	:returns: str the calculated 3DES session key.
+    :returns: str the calculated 3DES session key.
     
     '''
     if k_type == KENC_TYPE:
@@ -390,7 +390,7 @@ def create_session_key_SCP03(key, k_type, cardChallenge, hostChallenge ):
     :param str k_type : The key type of the key. 
     :param str sequenceCounter: The sequence counter.
 
-	:returns: str the calculated AES session key.
+    :returns: str the calculated AES session key.
     
     '''
     SCP03_CST_DERIVATION_S_ENC = '04'
