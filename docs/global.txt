@@ -1,0 +1,8 @@
+.. _GitHub project: https://github.com/GPContributors/PyGP
+.. _issue tracker: https://github.com/GPContributors/PyGP/issues
+
+.. _Python: http://python.org
+
+.. _git: http://git-scm.com/
+.. _GitHub: https://github.com/
+
