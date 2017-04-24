@@ -208,27 +208,43 @@ def send_apdu(bytelist_capdu):
                         rapdu = rapdu + toHexString(bytelist_rapdu[-2:])
                         return error_status, rapdu
                 
-                # status word: 61
-                elif len(bytelist_rapdu) == 0x02 and bytelist_rapdu[0] == 0x61: 
-                    # resend the command with the rigth Le but keeping the first Le bytes ask by the user
+                # status word: 61xx
+                elif bytelist_rapdu[-2] == 0x61:
+                    # CASE01. 6100 with response data
+                    if bytelist_rapdu[-1] == 0x00:
+                        rapdu_all = bytelist_rapdu[:-2]
+                    # CASE02. 61xx without response data
+                    else:
+                        rapdu_all = []
                     
-                    bytelist_capdu_getResponse = []
-                    bytelist_capdu_getResponse.append((0x00 | channelNum))
-                    bytelist_capdu_getResponse.append(0xC0)
-                    bytelist_capdu_getResponse.append(0x00)
-                    bytelist_capdu_getResponse.append(0x00)
-                    bytelist_capdu_getResponse.append(bytelist_rapdu[1])
-                    # perform a get response with the Le ask by the user
-                    log_management_apdu(TO_CARD, bytelist_capdu_getResponse)
-                    error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu_getResponse)
-                    log_management_apdu(TO_READER,bytelist_rapdu)
-                    log_apdu(TO_READER, bytelist_rapdu)
+                    while(True):
+                        # resend the command with the rigth Le but keeping the first Le bytes ask by the user
+                        bytelist_capdu_getResponse = []
+                        bytelist_capdu_getResponse.append((0x00 | channelNum))
+                        bytelist_capdu_getResponse.append(0xC0)
+                        bytelist_capdu_getResponse.append(0x00)
+                        bytelist_capdu_getResponse.append(0x00)
+                        bytelist_capdu_getResponse.append(bytelist_rapdu[-1])
+                        # perform a get response with the Le ask by the user
+                        log_management_apdu(TO_CARD, bytelist_capdu_getResponse)
+                        error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu_getResponse)
+                        log_management_apdu(TO_READER,bytelist_rapdu)
+                        log_apdu(TO_READER, bytelist_rapdu)
 
-                    if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
-                        return error_status, ''
+                        if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
+                            return error_status, ''
+
+                        # save the response including status word. exit the loop.
+                        if bytelist_rapdu[-2] != 0x61:
+                            rapdu_all += bytelist_rapdu
+                            break
+                        # save the response without status word
+                        else:
+                            rapdu_all += bytelist_rapdu[:-2]
                     
                     # return all the card response
-                    return error_status, toHexString(bytelist_rapdu)
+                    return error_status, toHexString(rapdu_all)
+
                 else:
                     # return all the card response
                     log_apdu(TO_READER, bytelist_rapdu)
