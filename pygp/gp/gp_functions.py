@@ -577,27 +577,12 @@ def select_application(str_AID, logical_channel = 0):
         log_end("select_application", error_status['errorStatus'])
         return error_status, None
     
-    if payload_mode_activated == False:
-        # no error so the application is selected. now store its aid
-        response_tlv = TLV(toByteArray(last_response()))
-
-        # check the tag
-        if response_tlv.getTAG() != '6F':
-            error_status = create_error_status(ERROR_INVALID_RESPONSE_DATA, runtimeErrorDict[ERROR_INVALID_RESPONSE_DATA])
-            return error_status, None
-        
-        for response_tlv in response_tlv.list_childs_tlv():
-            if response_tlv.getTAG() == '84':
-                current_selected_aid = response_tlv.getValue()
-    else:
-        current_selected_aid = str_AID
-
     # there is no error. Do initialize securityInfo of selected channel
     securityInfo[4] = logical_channel
     securityInfo[logical_channel] = {}
     securityInfo[logical_channel]['securityLevel'] = SECURITY_LEVEL_NO_SECURE_MESSAGING
     securityInfo[logical_channel]['channelStatus'] = "ON"
-    securityInfo[logical_channel]['selectedAID'] = current_selected_aid
+    securityInfo[logical_channel]['selectedAID'] = str_AID
     log_end("select_application", error_status['errorStatus'])
 
     return error_status, rapdu
