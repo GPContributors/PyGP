@@ -30,12 +30,12 @@ class NISTP384R1(object):
 @utils.register_interface(ec.EllipticCurve)
 class NISTP521R1(object):
     name = "secp521r1"
-    key_size = 384
+    key_size = 521
 
 @utils.register_interface(ec.EllipticCurve)
 class NISTP256R1(object):
-    name = "prime256v1"
-    key_size = 384
+    name = "secp256r1"
+    key_size = 256
 
 @utils.register_interface(ec.EllipticCurve)
 class BRAINPOOLP192R1(object):
