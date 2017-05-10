@@ -23,7 +23,7 @@ APDU_MNGT       = 0x40
 APDU_TIMING     = 0x80
 
 # Global variables 
-must_stop_on_error = False
+must_stop_on_error = True
 current_protocol = conn.SCARD_PROTOCOL_Tx
 readername   = None
 key_list    = []
