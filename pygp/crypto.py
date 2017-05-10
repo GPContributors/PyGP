@@ -9,6 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -708,6 +709,45 @@ def MD5(data):
     dg = digest.finalize()
     return dg.hex().upper()
 
+def HMAC(data, key, hash_algorithm = 'SHA1'):
+    ''' 
+        Performs the SHA-512 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :param str key: Hexadecimal string.
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns str data_ret: the hash data.
+ 
+    '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    key = ''.join( re.split( '\W+', key.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    key_bytes = bytes.fromhex(key)
+
+    # managing the hash algorithm
+    hash = hashes.SHA1()
+    if hash_algorithm == 'SHA1':
+        hash = hashes.SHA1()
+    elif hash_algorithm == 'SHA224':
+        hash = hashes.SHA224()
+    elif hash_algorithm == 'SHA256':
+        hash = hashes.SHA256()
+    elif hash_algorithm == 'SHA384':
+        hash = hashes.SHA384()
+    elif hash_algorithm == 'SHA512':
+        hash = hashes.SHA512()
+    else:
+        return None
+    
+    h = hmac.HMAC(key_bytes, hash, backend=default_backend())
+    h.update(data_bytes)
+    dg = h.finalize()
+
+    return dg.hex().upper()
 
 def generate_RSA_keys(exponent, key_size = 1024 ):
     ''' 
