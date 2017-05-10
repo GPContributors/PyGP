@@ -563,17 +563,13 @@ def MAC33(data, key, iv="0000000000000000"):
     value = DES3_CBC(data, key, iv)
     return value[-16:]
 
-def MAC3(data, key, iv="0000000000000000"):
+def MAC3(data, key, pad='ISO_9797_M2', iv="0000000000000000"):
     ''' 
-    
         Performs a MAC3 on the hexadecimal string using the specified key and the specified initial vector
-        
         :param str data: Hexadecimal string to mac.
-
         :param str key: the key to use
-
+        :param str padding: the padding method to use. Could be ISO_9797_M1, ISO_9797_M2 (default), None
         :param str iv: the initial vector (0000000000000000 by default)
-
         :returns str data_ret: the MAC3 of the data.
     
     '''
@@ -584,6 +580,13 @@ def MAC3(data, key, iv="0000000000000000"):
     if len(key) < 16*2:
         raise BaseException("Invalid key length for the MAC3 operation")
 
+    if pad == ¡®ISO_9797_M2¡¯:
+        data = ISO_9797_M2_Padding(data)
+    elif pad == ¡®ISO_9797_M1¡¯:
+        data = ISO_9797_M1_Padding(data)
+    else:
+        return None
+    
     value = DES_CBC(data, key[0:16], iv)
     value = DES_INV_ECB(value[-16:], key[16:32])
     value = DES_ECB(value, key[0:16])
