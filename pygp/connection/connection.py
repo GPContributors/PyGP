@@ -119,7 +119,8 @@ def send_apdu(bytelist_capdu):
     log_apdu(TO_CARD, bytelist_capdu)
     if card_info['protocol'] == SCARD_PROTOCOL_T1:
         error_status, rapdu = connection_module.send_apdu_T1(card_info, bytelist_capdu)
-        log_apdu(TO_READER, rapdu)
+        if error_status['errorStatus'] == 0x00:
+            log_apdu(TO_READER, rapdu)
         return error_status, toHexString(rapdu)
     else:
         # T=0 management
@@ -160,7 +161,8 @@ def send_apdu(bytelist_capdu):
                 # CASE_1: send APDu without any changes
                 error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu)
 
-                log_apdu(TO_READER, bytelist_rapdu)
+                if error_status['errorStatus'] == 0x00:
+                    log_apdu(TO_READER, bytelist_rapdu)
 
                 return error_status, toHexString(bytelist_rapdu)
             
@@ -189,13 +191,12 @@ def send_apdu(bytelist_capdu):
                     #resend the command
                     log_management_apdu(TO_CARD,bytelist_capdu)
                     error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu)
-                    log_management_apdu(TO_READER, bytelist_rapdu)
-                    
-                    log_apdu(TO_READER, bytelist_rapdu)
 
                     if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
                         return error_status, ''
-
+                    else:
+                        log_management_apdu(TO_READER, bytelist_rapdu)
+                        log_apdu(TO_READER, bytelist_rapdu)
 
                     
                     # manage card response
@@ -228,11 +229,12 @@ def send_apdu(bytelist_capdu):
                         # perform a get response with the Le ask by the user
                         log_management_apdu(TO_CARD, bytelist_capdu_getResponse)
                         error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu_getResponse)
-                        log_management_apdu(TO_READER,bytelist_rapdu)
-                        log_apdu(TO_READER, bytelist_rapdu)
 
                         if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
                             return error_status, ''
+                        else:
+                            log_management_apdu(TO_READER,bytelist_rapdu)
+                            log_apdu(TO_READER, bytelist_rapdu)
 
                         # save the response including status word. exit the loop.
                         if bytelist_rapdu[-2] != 0x61:
@@ -287,16 +289,17 @@ def send_apdu(bytelist_capdu):
                     bytelist_rapdu = []
                     error_status, bytelist_rapdu = connection_module.send_apdu_T0(card_info, bytelist_capdu_getResponse)
                     
-                    log_management_apdu(TO_READER,bytelist_rapdu)
+                    if error_status['errorCode'] == ERROR_STATUS_SUCCESS:
+                        log_management_apdu(TO_READER,bytelist_rapdu)
 
                     if bytelist_rapdu[0] == 0x6E and bytelist_rapdu[0] == 0x00:
                         #if the result is 0x6E00 then this should be a broken ISO implementation not supporting GET RESPONSE on 0x9000 and we return the previous response data
                         bytelist_rapdu = store_bytelist_rapdu
                     
-                    log_apdu(TO_READER, bytelist_rapdu)
-
                     if error_status['errorCode'] != ERROR_STATUS_SUCCESS:
                         return error_status, ''
+                    else:
+                        log_apdu(TO_READER, bytelist_rapdu)
                     
                     # return all the card response
                     return error_status, toHexString(bytelist_rapdu)
