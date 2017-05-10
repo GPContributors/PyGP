@@ -1701,22 +1701,29 @@ def put_scp_key(key_version_number, key_list, replace = False ):
     else:
         p1 = key_version_number
 
+    scp = security_info['secureChannelProtocol']
     apdu_data = key_version_number
     # cipher key regarding the SCP protocol
-    if  security_info['secureChannelProtocol'] == GP_SCP03:
-        for ( key_vn, key_id, key_type, key_value ) in key_list:
-            cipher_key, cipher_key_kcv = cipher_key_SCP03(key_value, security_info['dataEncryptionSessionKey'] )
+    for ( key_vn, key_id, key_type, key_value ) in key_list:
+        # calculate key check value (refer key_type of key_list)
+        if (key_type == 'DES') or (key_type == 'AES'):
+            kcv = compute_key_check_value(key_type, key_value)
+        else:
+            error_status = create_error_status(ERROR_PUTKEY_INVALID_KEY_TYPE, runtimeErrorDict[ERROR_PUTKEY_INVALID_KEY_TYPE])
+            break
                         
-            apdu_data = apdu_data + key_type_coding_dict[key_type]  + lv( getLength(key_value) + cipher_key) + lv(cipher_key_kcv)
+        # encrypt the key (refer the key type of security_info['dataEncryptionSessionKey'])
+        if (scp == GP_SCP03) or (scp == GP_SCP02):
+            encryptedkey = cipher_key(key_value, security_info['dataEncryptionSessionKey'], scp)
+        else:
+            error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
+            break
 
-    elif security_info['secureChannelProtocol'] == GP_SCP02:
+        # compose APDU
+        apdu_data = apdu_data + key_type_coding_dict[key_type]  + lv( getLength(encryptedkey) + encryptedkey) + lv(kcv)
         
-        for ( key_vn, key_id, key_type, key_value ) in key_list:
-            cipher_key, cipher_key_kcv = cipher_key_SCP02(key_value, security_info['dataEncryptionSessionKey'] )
-            apdu_data = apdu_data  + key_type_coding_dict[key_type]  + lv(cipher_key) + lv(cipher_key_kcv)
- 
-    else:
-        error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
+    if error_status['errorStatus'] != 0x00:
+        log_end("put_scp_key", error_status['errorStatus'])
         return error_status
 
     put_scp_key_apdu = '80 D8' + p1 + '81' + lv(apdu_data)

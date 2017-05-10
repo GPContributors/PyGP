@@ -142,6 +142,7 @@ ERROR_INCONSISTENT_SEQUENCE_COUNTER         = '8030100C' #!< The Sequence counte
 
 INVALID_LOGICAL_CHANNEL_NUMBER              = '80001000' #!< Invalid logical channel number.
 ERROR_LOGICAL_CHANNEL_NOT_AVAILABLE         = '80001001' #!< logical channel is not available.
+ERROR_PUTKEY_INVALID_KEY_TYPE               = '80001002' #!< Invalid key type value.
 
 runtimeErrorDict = {
     ERROR_UNRECOGNIZED_APDU_COMMAND: "A APDU command can't be recognized as a valid T=0 protocol Case 1-4 ISO7816-4 APDU",
@@ -160,6 +161,7 @@ runtimeErrorDict = {
 
     INVALID_LOGICAL_CHANNEL_NUMBER: "Invalid logical channel number",
     ERROR_LOGICAL_CHANNEL_NOT_AVAILABLE: "Target logical channel is not available.",
+    ERROR_PUTKEY_INVALID_KEY_TYPE: "PUTKEY : The key type is invalid",
 }
 
 def create_no_error_status(retCode):
