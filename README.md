@@ -6,5 +6,5 @@ Using this library, you can use all features of GlobalPlatform project use Pytho
 It supports Python 3.5+.
 
 
-You can find more information in the `documentation`_.
+You can find more information in the [documentation](http://pygp.readthedocs.io/en/latest/index.html).
 
