@@ -194,7 +194,7 @@ def wrap_command(security_info, capdu):
                 if ISO_case == CASE_1:
                     apdu_to_wrap = bytelist_capdu
                     # put lc with the length of the mac
-                    apdu_to_wrap[4] = 0x08
+                    apdu_to_wrap.append(0x08)
 
                 elif ISO_case == CASE_2S:
                     Le = bytelist_capdu[-1:]
@@ -226,7 +226,7 @@ def wrap_command(security_info, capdu):
             if ISO_case == CASE_1:
                 apdu_to_wrap = bytelist_capdu
                 # put lc with the length of the mac
-                apdu_to_wrap[4] = 0x00
+                apdu_to_wrap.append(0x00)
 
             elif ISO_case == CASE_2S:
                 Le = bytelist_capdu[:-1]
