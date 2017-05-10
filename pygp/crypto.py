@@ -1110,12 +1110,12 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
     return privateKey, publicKey
 
 
-def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
+def build_EC_keys( s, x, y, curve_name = 'brainpoolP256r1'):
     ''' 
         Build EC keys using parameters
         
         
-        :param str p: The private value
+        :param str s: The private value
 
         :param str x: The affine x component of the public point
 
@@ -1153,7 +1153,7 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
     '''
     import re
     # remove space if any
-    p = ''.join( re.split( '\W+', p.upper() ) )
+    s = ''.join( re.split( '\W+', s.upper() ) )
     x = ''.join( re.split( '\W+', x.upper() ) )
     y = ''.join( re.split( '\W+', y.upper() ) )
 
@@ -1164,7 +1164,7 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
         return None,None
 
     # build keys objects
-    private_key = EC_private_key(p, curve)
+    private_key = EC_private_key(s, curve)
     private_key.set_public_key(x, y)
     private_key.build()
     
