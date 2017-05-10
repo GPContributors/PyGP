@@ -23,6 +23,8 @@ apdu_timing        = False
 payload_mode_activated = False
 payload_list       = []
 
+total_time = 0.0
+
 def clear_securityInfo():
     global securityInfo
     securityInfo = [{'channelStatus':'ON'}, {}, {}, {}, 0]
@@ -50,6 +52,13 @@ def last_status():
 def set_apdu_timing(activated):
     global apdu_timing
     apdu_timing = activated
+
+def set_start_timing():
+    global total_time
+    total_time = 0.0
+
+def get_total_execution_time():
+    return total_time
 
 def __check_security_info__(security_info):
     if security_info == None:
@@ -415,13 +424,10 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
     global apdu_timing
     global payload_mode_activated
     global payload_list
-
+    global total_time
     
     log_start("send_APDU")
     #TODO: managing security info wrap the command
-
-    if apdu_timing == True:
-        start_time = time.perf_counter()
 
     if raw_mode == True:
         # no wrapping management, just send the apdu
@@ -449,8 +455,13 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             # manage the selected logical channel
             bytelist_capdu[0] |= securityInfo[4]
 
+        start_time = time.perf_counter()
+
         error_status, rapdu = send_apdu(bytelist_capdu)
 
+        end_time = time.perf_counter() 
+        total_time = total_time + (end_time - start_time)
+        
     if error_status['errorStatus'] != 0x00:
         log_end("send_APDU", error_status['errorStatus'])
         return error_status, None
@@ -464,7 +475,6 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             return error_status, None
 
     if apdu_timing == True:
-        end_time = time.perf_counter() 
         log_info("command time: %3f ms" %(end_time - start_time))
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status

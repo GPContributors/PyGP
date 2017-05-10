@@ -202,6 +202,24 @@ def get_payload_list():
     return gp.get_payload_list()
 
 
+def set_start_timing():
+    """
+        Start to measure APDU transaction time.
+        It will add the time consumption of each command.
+
+    """
+    return gp.set_start_timing()
+
+def get_total_execution_time():
+    """
+        Returns the total execution time.
+
+        :returns: time in second.
+
+    """
+    return gp.get_total_execution_time()
+
+
 def echo(message, log_level=INFO_LEVEL):
     """
         Log the message argument depending on the logging level
