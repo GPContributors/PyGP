@@ -8,6 +8,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -27,12 +28,12 @@ class NISTP384R1(object):
 @utils.register_interface(ec.EllipticCurve)
 class NISTP521R1(object):
     name = "secp521r1"
-    key_size = 384
+    key_size = 521
 
 @utils.register_interface(ec.EllipticCurve)
 class NISTP256R1(object):
-    name = "prime256v1"
-    key_size = 384
+    name = "secp256r1"
+    key_size = 256
 
 @utils.register_interface(ec.EllipticCurve)
 class BRAINPOOLP192R1(object):
@@ -559,17 +560,13 @@ def MAC33(data, key, iv="0000000000000000"):
     value = DES3_CBC(data, key, iv)
     return value[-16:]
 
-def MAC3(data, key, iv="0000000000000000"):
+def MAC3(data, key, padding='ISO_9797_M2', iv="0000000000000000"):
     ''' 
-    
         Performs a MAC3 on the hexadecimal string using the specified key and the specified initial vector
-        
         :param str data: Hexadecimal string to mac.
-
         :param str key: the key to use
-
+        :param str padding: the padding method to use. Could be ISO_9797_M1, ISO_9797_M2 (default), None
         :param str iv: the initial vector (0000000000000000 by default)
-
         :returns str data_ret: the MAC3 of the data.
     
     '''
@@ -580,6 +577,13 @@ def MAC3(data, key, iv="0000000000000000"):
     if len(key) < 16*2:
         raise BaseException("Invalid key length for the MAC3 operation")
 
+    if padding == 'ISO_9797_M2':
+        data = ISO_9797_M2_Padding(data)
+    elif padding == 'ISO_9797_M1':
+        data = ISO_9797_M1_Padding(data)
+    else:
+        return None
+    
     value = DES_CBC(data, key[0:16], iv)
     value = DES_INV_ECB(value[-16:], key[16:32])
     value = DES_ECB(value, key[0:16])
@@ -705,6 +709,45 @@ def MD5(data):
     dg = digest.finalize()
     return dg.hex().upper()
 
+def HMAC(data, key, hash_algorithm = 'SHA1'):
+    ''' 
+        Performs the SHA-512 algorithm on hexadecimal data
+        
+        :param str data: Hexadecimal string.
+
+        :param str key: Hexadecimal string.
+
+        :param str hash_algorithm: the hash algorithm if the message you want to sign has already been hashed. Could be  'SHA1', 'SHA224', 'SHA256', 'SHA384' or 'SHA512'
+
+        :returns str data_ret: the hash data.
+ 
+    '''
+    import re
+    data = ''.join( re.split( '\W+', data.upper() ) )
+    key = ''.join( re.split( '\W+', key.upper() ) )
+    data_bytes  = bytes.fromhex(data)
+    key_bytes = bytes.fromhex(key)
+
+    # managing the hash algorithm
+    hash = hashes.SHA1()
+    if hash_algorithm == 'SHA1':
+        hash = hashes.SHA1()
+    elif hash_algorithm == 'SHA224':
+        hash = hashes.SHA224()
+    elif hash_algorithm == 'SHA256':
+        hash = hashes.SHA256()
+    elif hash_algorithm == 'SHA384':
+        hash = hashes.SHA384()
+    elif hash_algorithm == 'SHA512':
+        hash = hashes.SHA512()
+    else:
+        return None
+    
+    h = hmac.HMAC(key_bytes, hash, backend=default_backend())
+    h.update(data_bytes)
+    dg = h.finalize()
+
+    return dg.hex().upper()
 
 def generate_RSA_keys(exponent, key_size = 1024 ):
     ''' 
@@ -1125,12 +1168,12 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
     return privateKey, publicKey
 
 
-def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
+def build_EC_keys( s, x, y, curve_name = 'brainpoolP256r1'):
     ''' 
         Build EC keys using parameters
         
         
-        :param str p: The private value
+        :param str s: The private value
 
         :param str x: The affine x component of the public point
 
@@ -1168,7 +1211,7 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
     '''
     import re
     # remove space if any
-    p = ''.join( re.split( '\W+', p.upper() ) )
+    s = ''.join( re.split( '\W+', s.upper() ) )
     x = ''.join( re.split( '\W+', x.upper() ) )
     y = ''.join( re.split( '\W+', y.upper() ) )
 
@@ -1179,7 +1222,7 @@ def build_EC_keys( p, x, y, curve_name = 'brainpoolP256r1'):
         return None,None
 
     # build keys objects
-    private_key = EC_private_key(p, curve)
+    private_key = EC_private_key(s, curve)
     private_key.set_public_key(x, y)
     private_key.build()
     

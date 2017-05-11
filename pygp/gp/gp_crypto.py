@@ -324,6 +324,40 @@ def calculate_mac_SCP03(data, key, iv):
 
     return mac
 
+def cipher_key(key_value, key, scp):
+    '''
+    cipher a sensitive key to SCP02/SCP03 protocol.
+    
+    :param str key_value : The sensitive key to cipher.
+    :param str key : key used to encrypt.(DEK)
+    :param int scp : A 3DES key used to sign 
+
+    :returns: (str): The ciphered key with its key check value
+    '''
+    if scp == GP_SCP03:
+        cipher_key = crypto.AES_CBC(key_value, key, crypto.ICV_NULL_16)
+    elif scp == GP_SCP02:
+        cipher_key = crypto.DES3_ECB(key_value, key)
+
+    return cipher_key
+
+def compute_key_check_value(key_type, key_value):
+    '''
+    compute the key check value(kcv).
+    
+    :param str key_type : The type of key_value(DES or AES) 
+    :param str key_value : The sensitive key value.
+
+    :returns: (str): key check value
+    '''
+    if key_type == 'DES':
+        key_kcv = crypto.DES3_ECB(crypto.ICV_NULL_8, key_value)
+    elif key_type == 'AES':
+        key_kcv = crypto.AES_ECB('01010101010101010101010101010101', key_value)
+
+    key_kcv = key_kcv[0:6] #only the first 3 bytes
+    return key_kcv
+
 def cipher_key_SCP02(key_value, key):
     '''
     cipher a sensitive key to SCP02 protocol.

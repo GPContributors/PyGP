@@ -48,7 +48,15 @@ class Test_Utils_Module(unittest.TestCase):
         bytestring = getLength("", 1)
         self.assertEqual(bytestring, "00") 
  
-    
+    def test_tlv_read(self):
+        ''' Test the tlv_read function'''
+        # response data for GET DATA KEY INFO
+        keyinfo = 'E042C00401228010C00402228010C00403228010C0060174A180A003C00C0274A840A740A640A540A440C00C0374A840A740A640A540A440C0040474B120C0047474B120'
+        dic_keyinfo = tlv_read(keyinfo)
+        bytestring = dic_keyinfo['E0']['C0'][0]
+        self.assertEqual(bytestring, "01228010")
+        bytestring = dic_keyinfo['E0']['C0'][3]
+        self.assertEqual(bytestring, "0174A180A003")
       
 
 if __name__ == "__main__":

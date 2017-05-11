@@ -23,6 +23,8 @@ apdu_timing        = False
 payload_mode_activated = False
 payload_list       = []
 
+total_time = 0.0
+
 def clear_securityInfo():
     global securityInfo
     securityInfo = [{'channelStatus':'ON'}, {}, {}, {}, 0]
@@ -50,6 +52,13 @@ def last_status():
 def set_apdu_timing(activated):
     global apdu_timing
     apdu_timing = activated
+
+def set_start_timing():
+    global total_time
+    total_time = 0.0
+
+def get_total_execution_time():
+    return total_time
 
 def __check_security_info__(security_info):
     if security_info == None:
@@ -185,7 +194,7 @@ def wrap_command(security_info, capdu):
                 if ISO_case == CASE_1:
                     apdu_to_wrap = bytelist_capdu
                     # put lc with the length of the mac
-                    apdu_to_wrap[4] = 0x08
+                    apdu_to_wrap.append(0x08)
 
                 elif ISO_case == CASE_2S:
                     Le = bytelist_capdu[-1:]
@@ -217,7 +226,7 @@ def wrap_command(security_info, capdu):
             if ISO_case == CASE_1:
                 apdu_to_wrap = bytelist_capdu
                 # put lc with the length of the mac
-                apdu_to_wrap[4] = 0x00
+                apdu_to_wrap.append(0x00)
 
             elif ISO_case == CASE_2S:
                 Le = bytelist_capdu[:-1]
@@ -415,13 +424,10 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
     global apdu_timing
     global payload_mode_activated
     global payload_list
-
+    global total_time
     
     log_start("send_APDU")
     #TODO: managing security info wrap the command
-
-    if apdu_timing == True:
-        start_time = time.perf_counter()
 
     if raw_mode == True:
         # no wrapping management, just send the apdu
@@ -449,8 +455,13 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             # manage the selected logical channel
             bytelist_capdu[0] |= securityInfo[4]
 
+        start_time = time.perf_counter()
+
         error_status, rapdu = send_apdu(bytelist_capdu)
 
+        end_time = time.perf_counter() 
+        total_time = total_time + (end_time - start_time)
+        
     if error_status['errorStatus'] != 0x00:
         log_end("send_APDU", error_status['errorStatus'])
         return error_status, None
@@ -464,7 +475,6 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             return error_status, None
 
     if apdu_timing == True:
-        end_time = time.perf_counter() 
         log_info("command time: %3f ms" %(end_time - start_time))
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status
@@ -567,27 +577,12 @@ def select_application(str_AID, logical_channel = 0):
         log_end("select_application", error_status['errorStatus'])
         return error_status, None
     
-    if payload_mode_activated == False:
-        # no error so the application is selected. now store its aid
-        response_tlv = TLV(toByteArray(last_response()))
-
-        # check the tag
-        if response_tlv.getTAG() != '6F':
-            error_status = create_error_status(ERROR_INVALID_RESPONSE_DATA, runtimeErrorDict[ERROR_INVALID_RESPONSE_DATA])
-            return error_status, None
-        
-        for response_tlv in response_tlv.list_childs_tlv():
-            if response_tlv.getTAG() == '84':
-                current_selected_aid = response_tlv.getValue()
-    else:
-        current_selected_aid = str_AID
-
     # there is no error. Do initialize securityInfo of selected channel
     securityInfo[4] = logical_channel
     securityInfo[logical_channel] = {}
     securityInfo[logical_channel]['securityLevel'] = SECURITY_LEVEL_NO_SECURE_MESSAGING
     securityInfo[logical_channel]['channelStatus'] = "ON"
-    securityInfo[logical_channel]['selectedAID'] = current_selected_aid
+    securityInfo[logical_channel]['selectedAID'] = str_AID
     log_end("select_application", error_status['errorStatus'])
 
     return error_status, rapdu
@@ -1706,22 +1701,29 @@ def put_scp_key(key_version_number, key_list, replace = False ):
     else:
         p1 = key_version_number
 
+    scp = security_info['secureChannelProtocol']
     apdu_data = key_version_number
     # cipher key regarding the SCP protocol
-    if  security_info['secureChannelProtocol'] == GP_SCP03:
-        for ( key_vn, key_id, key_type, key_value ) in key_list:
-            cipher_key, cipher_key_kcv = cipher_key_SCP03(key_value, security_info['dataEncryptionSessionKey'] )
+    for ( key_vn, key_id, key_type, key_value ) in key_list:
+        # calculate key check value (refer key_type of key_list)
+        if (key_type == 'DES') or (key_type == 'AES'):
+            kcv = compute_key_check_value(key_type, key_value)
+        else:
+            error_status = create_error_status(ERROR_PUTKEY_INVALID_KEY_TYPE, runtimeErrorDict[ERROR_PUTKEY_INVALID_KEY_TYPE])
+            break
                         
-            apdu_data = apdu_data + key_type_coding_dict[key_type]  + lv( getLength(key_value) + cipher_key) + lv(cipher_key_kcv)
+        # encrypt the key (refer the key type of security_info['dataEncryptionSessionKey'])
+        if (scp == GP_SCP03) or (scp == GP_SCP02):
+            encryptedkey = cipher_key(key_value, security_info['dataEncryptionSessionKey'], scp)
+        else:
+            error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
+            break
 
-    elif security_info['secureChannelProtocol'] == GP_SCP02:
+        # compose APDU
+        apdu_data = apdu_data + key_type_coding_dict[key_type]  + lv( getLength(encryptedkey) + encryptedkey) + lv(kcv)
         
-        for ( key_vn, key_id, key_type, key_value ) in key_list:
-            cipher_key, cipher_key_kcv = cipher_key_SCP02(key_value, security_info['dataEncryptionSessionKey'] )
-            apdu_data = apdu_data  + key_type_coding_dict[key_type]  + lv(cipher_key) + lv(cipher_key_kcv)
- 
-    else:
-        error_status = create_error_status(ERROR_INCONSISTENT_SCP, runtimeErrorDict[ERROR_INCONSISTENT_SCP])
+    if error_status['errorStatus'] != 0x00:
+        log_end("put_scp_key", error_status['errorStatus'])
         return error_status
 
     put_scp_key_apdu = '80 D8' + p1 + '81' + lv(apdu_data)
