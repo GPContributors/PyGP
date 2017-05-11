@@ -834,15 +834,27 @@ def ls():
 
         if isd_info_list != None:
             for app_info in isd_info_list:
-                logger.log_info("Card Manager AID : %s (%s) (%s)" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
+                aid_name = aid_dict.get(app_info['aid'].upper())
+                if aid_name != None:
+                    logger.log_info("Card Manager AID : %s {%s} (%s) (%s)" % (app_info['aid'].upper(), aid_name, SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
+                else:
+                    logger.log_info("Card Manager AID : %s (%s) (%s)" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
         if app_info_list != None:
             for app_info in app_info_list:
-                logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
+                aid_name = aid_dict.get(app_info['aid'].upper())
+                if aid_name != None:
+                    logger.log_info("Application AID : %s {%s} (%s) (%s)" % (app_info['aid'].upper(), aid_name, Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
+                else:
+                    logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
         if exefile_info_list != None:        
             for app_info in exefile_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
+                aid_name = aid_dict.get(app_info['aid'].upper())
+                if aid_name != None:
+                    logger.log_info("Load file AID : %s {%s} (%s)" % (app_info['aid'].upper(), aid_name, ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
+                else:
+                    logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
                 if app_info['module_aid'] != None:
-                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
+                    logger.log_info("\tModule AID : %s" % (app_info['module_aid'].upper()))
     
     except BaseException as e:
         logger.log_error(str(e))

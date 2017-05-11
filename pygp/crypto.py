@@ -1,7 +1,6 @@
 # here is the interface for crypto.
 # we will define all crypto functions we need
-# and redirect to the open source project we select
-# candidates are pycrypto 2.6.1, cryptography 1.7.1
+# and redirect to the open source project cryptography
 from pygp.utils import *
 from pygp.constants import *
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -15,10 +14,8 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric import ec
-
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
-
 from cryptography import utils
 
 
@@ -585,7 +582,8 @@ def MAC3(data, key, padding='ISO_9797_M2', iv="0000000000000000"):
     elif padding == 'ISO_9797_M1':
         data = ISO_9797_M1_Padding(data)
     else:
-        return None
+        # no padding on data, just pass
+        pass
     
     value = DES_CBC(data, key[0:16], iv)
     value = DES_INV_ECB(value[-16:], key[16:32])
@@ -771,6 +769,12 @@ def generate_RSA_keys(exponent, key_size = 1024 ):
     public_numbers = public_key.public_numbers()
     n = public_numbers.n
     e = public_numbers.e
+
+    # to compliant with the type of the class
+    n = hex(n).lstrip("0x").upper()
+    e = hex(e).lstrip("0x").upper()
+
+
     # create our RSA public key object
     publicKey = RSA_public_key(n, e, public_key)
     # get the private key implementation values in order to create our own private key class
@@ -781,6 +785,14 @@ def generate_RSA_keys(exponent, key_size = 1024 ):
     dmp1 = private_numbers.dmp1
     dmq1 = private_numbers.dmq1
     iqmp = private_numbers.iqmp
+
+    # to compliant with the type of the class
+    p = hex(p).lstrip("0x").upper()
+    q = hex(q).lstrip("0x").upper()
+    d = hex(d).lstrip("0x").upper()
+    dmp1 = hex(dmp1).lstrip("0x").upper()
+    dmq1 = hex(dmq1).lstrip("0x").upper()
+    iqmp = hex(iqmp).lstrip("0x").upper()
     
     # create our RSA private key object
     privateKey = RSA_private_key(p, q, d, dmp1, dmq1, iqmp, private_key)
@@ -1141,6 +1153,10 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
     x = public_numbers.x
     y = public_numbers.y
     curve = public_numbers.curve
+
+    # to compliant with the type of the class
+    x = hex(x).lstrip("0x").upper()
+    y = hex(y).lstrip("0x").upper()
     
     # create our EC public key object
     publicKey = EC_public_key(x,  y, curve, public_key )
@@ -1236,6 +1252,13 @@ def generate_DSA_keys(key_size = 1024 ):
     g = public_numbers.parameter_numbers.g
     q = public_numbers.parameter_numbers.q
     y = public_numbers.y
+    
+    # to compliant with the type of the class
+    p = hex(p).lstrip("0x").upper()
+    g = hex(g).lstrip("0x").upper()
+    q = hex(q).lstrip("0x").upper()
+    y = hex(y).lstrip("0x").upper()
+
     # create our DSA public key object
     publicKey = DSA_public_key(p, q, g, y, public_key )
 
@@ -1245,6 +1268,13 @@ def generate_DSA_keys(key_size = 1024 ):
     g = private_numbers.public_numbers.parameter_numbers.g
     q = private_numbers.public_numbers.parameter_numbers.q
     x = private_numbers.x
+
+    # to compliant with the type of the class
+    p = hex(p).lstrip("0x").upper()
+    g = hex(g).lstrip("0x").upper()
+    q = hex(q).lstrip("0x").upper()
+    x = hex(x).lstrip("0x").upper()
+    
     # create our DSA private key object
     privateKey = DSA_private_key(p, q, g, x, private_key)
     
@@ -1307,6 +1337,11 @@ def generate_DH_keys(generator, key_size = 1024 ):
     p = public_numbers.parameter_numbers.p
     g = public_numbers.parameter_numbers.g
     y = public_numbers.y
+
+    # to compliant with the type of the class
+    p = hex(p).lstrip("0x").upper()
+    g = hex(g).lstrip("0x").upper()
+    y = hex(y).lstrip("0x").upper()
     # create our DH public key object
     publicKey = DH_public_key(p, g, y, public_key )
 
@@ -1315,6 +1350,11 @@ def generate_DH_keys(generator, key_size = 1024 ):
     p = private_numbers.public_numbers.parameter_numbers.p
     g = private_numbers.public_numbers.parameter_numbers.g
     x = private_numbers.x
+
+    # to compliant with the type of the class
+    p = hex(p).lstrip("0x").upper()
+    g = hex(g).lstrip("0x").upper()
+    x = hex(x).lstrip("0x").upper()
     # create our DH private key object
     privateKey = DH_private_key(p, g, x, private_key)
     

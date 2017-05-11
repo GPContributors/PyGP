@@ -77,7 +77,7 @@ def select_channel(logical_channel):
     # Display All Channel Information
     logger.log_info("Channel Status Information [0~3]")
     logger.log_info("Channel SCP SCPi SecurityLevel AID")
-    logger.log_info("------- --- ---- ------------- -----------------")
+    logger.log_info("------- --- ---- ------------- ------------------")
     channel_id = 0
     for sChannelInfo in securityInfo[0:4]:
         if (securityInfo[4] == channel_id):
@@ -91,20 +91,20 @@ def select_channel(logical_channel):
                 strAID = 'NONE'
             
             if 'secureChannelProtocolImpl' in sChannelInfo.keys():
-                logger.log_info(" %s 0%d    %d   %s      %d        %s" \
+                logger.log_info(" %s 0%d    %d   %s        %d        %s" \
                 %(strWorking, channel_id, sChannelInfo['secureChannelProtocol'],\
                  sChannelInfo['secureChannelProtocolImpl'], sChannelInfo['securityLevel'], strAID ))
             else:
-                logger.log_info(" %s 0%d   n/a  n/a      n/a     %s" % (strWorking, channel_id, strAID))
+                logger.log_info(" %s 0%d   n/a  n/a      n/a       %s" %(strWorking, channel_id, strAID))
         else:
-            logger.log_info("   0%d  CHANNEL NOT AVAILABLE" %(channel_id))
+            logger.log_info("   0%d             Not Available" %(channel_id))
 
         channel_id += 1
 
     # check the parameter value
     if logical_channel == None or logical_channel < 0x00 or logical_channel > 0x03:
         error_status = create_error_status(INVALID_LOGICAL_CHANNEL_NUMBER, runtimeErrorDict[INVALID_LOGICAL_CHANNEL_NUMBER])
-        log_info("\tSelected logical channel unchanged (%-0.2X)" % securityInfo[4])
+        log_info("\tInvalid logical channel (%-0.2X)" % securityInfo[4])
         return error_status
 
     # check the status of logical channel
