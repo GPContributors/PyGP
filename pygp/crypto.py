@@ -582,7 +582,8 @@ def MAC3(data, key, padding='ISO_9797_M2', iv="0000000000000000"):
     elif padding == 'ISO_9797_M1':
         data = ISO_9797_M1_Padding(data)
     else:
-        return None
+        # no padding on data, just pass
+        pass
     
     value = DES_CBC(data, key[0:16], iv)
     value = DES_INV_ECB(value[-16:], key[16:32])
