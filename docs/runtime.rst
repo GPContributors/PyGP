@@ -11,6 +11,8 @@ Runtime functions
 .. autofunction:: pygp.pygp.set_payload_mode
 .. autofunction:: pygp.pygp.set_key
 .. autofunction:: pygp.pygp.sleep
+.. autofunction:: pygp.pygp.stop_on_error
+
 
 
 
