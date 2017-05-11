@@ -1163,8 +1163,8 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
 
     # get the private key implementation values in order to create our own private key class
     private_numbers = private_key.private_numbers()
-
-    privateKey = EC_private_key(private_numbers.private_value, curve, private_key)
+    p = hex(private_numbers.private_value).lstrip("0x").upper()
+    privateKey = EC_private_key(p, curve, private_key)
         
     return privateKey, publicKey
 
