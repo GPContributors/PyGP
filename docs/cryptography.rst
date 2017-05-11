@@ -40,17 +40,11 @@ Cryptography functions
 .. autofunction:: pygp.crypto.build_RSA_keys
 .. autofunction:: pygp.crypto.RSA_signature
 .. autofunction:: pygp.crypto.RSA_verify
-#.. autofunction:: pygp.crypto.DSA_signature
-#.. autofunction:: pygp.crypto.DSA_verify
+
 
 .. autofunction:: pygp.crypto.ECDSA_signature
 .. autofunction:: pygp.crypto.ECDSA_verify
 .. autofunction:: pygp.crypto.generate_ECDH_key_agreement
 .. autofunction:: pygp.crypto.generate_EC_keys
 .. autofunction:: pygp.crypto.build_EC_keys
-#.. autofunction:: pygp.crypto.generate_DSA_keys
-#.. autofunction:: pygp.crypto.build_DSA_keys
 
-#.. autofunction:: pygp.crypto.generate_DH_keys
-#.. autofunction:: pygp.crypto.build_DH_keys
-#.. autofunction:: pygp.crypto.generate_DH_key_agreement
