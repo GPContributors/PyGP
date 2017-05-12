@@ -843,6 +843,29 @@ def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
 
     return private_key, public_key
 
+
+def build_RSA_public_keys(public_modulus, public_exponent):
+    ''' 
+        Build RSA public keys using specific values
+
+        :param str public_modulus: the public key modulus.
+        
+        :param str public_exponent: the public key exponent.
+
+        :returns data_ret: the public key objects
+ 
+    '''
+    import re
+    # remove space if any
+    public_modulus = ''.join( re.split( '\W+', public_modulus.upper() ) )
+    public_exponent = ''.join( re.split( '\W+', public_exponent.upper() ) )
+
+    public_key = RSA_public_key(public_modulus, public_exponent)
+    public_key.build()
+
+    return public_key
+
+
 def RSA_signature(message, private_key, padding_algorithm = 'PKCS1', hash_algorithm = 'SHA1'):
     ''' 
         Performs a RSA signature on data using the padding and hash algorithm.
@@ -1231,6 +1254,62 @@ def build_EC_keys( s, x, y, curve_name = 'brainpoolP256r1'):
     public_key.build()
     
     return private_key, public_key
+
+
+def build_EC_public_key( x, y, curve_name = 'brainpoolP256r1'):
+    ''' 
+        Build EC public keys using parameters
+        
+        :param str x: The affine x component of the public point
+
+        :param str y: The affine y component of the public point 
+
+        :param str curve_name: the name of the curve. Possible curve names:
+
+        +-------------------+-------------------------------+
+        | Value             |  Description                  |
+        +===================+===============================+
+        | "nistP521r1"      |  NIST P-521                   |
+        +-------------------+-------------------------------+
+        | "nistP256r1"      |  NIST P-256                   |
+        +-------------------+-------------------------------+
+        | "brainpoolP192r1" |  Brainpool P-192 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP192t1" |  Brainpool P-192 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256r1" |  Brainpool P-256 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256t1" |  Brainpool P-256 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384r1" |  Brainpool P-384 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384t1" |  Brainpool P-384 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512r1" |  Brainpool P-512 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512t1" |  Brainpool P-512 T1           |
+        +-------------------+-------------------------------+
+
+            
+        :returns data_ret: the public key objects
+ 
+    '''
+    import re
+    # remove space if any
+    x = ''.join( re.split( '\W+', x.upper() ) )
+    y = ''.join( re.split( '\W+', y.upper() ) )
+
+    try:
+        curve = ec._CURVE_TYPES[curve_name]()
+    except KeyError:
+
+        return None,None
+
+    # build keys objects
+    public_key = EC_public_key(x, y, curve)
+    public_key.build()
+    
+    return public_key
 
 
 def generate_DSA_keys(key_size = 1024 ):
