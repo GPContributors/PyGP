@@ -293,7 +293,7 @@ def wrap_command(security_info, capdu):
             
     # MAC calculation
     if security_info['secureChannelProtocol'] == GP_SCP02:
-        mac = calculate_mac_SCP02(toHexString(apdu_to_wrap), security_info['C_MACSessionKey'], iv)
+        mac = calculate_mac_SCP02(toHexString(apdu_to_wrap), security_info['C_MACSessionKey'], 'ISO_9797_M2', iv)
         # re put lc with the length of the encipher data
         apdu_to_wrap[4] = len(encData) + 8# enc data 
     elif(security_info['secureChannelProtocol']== GP_SCP03):
@@ -1362,7 +1362,7 @@ def external_authenticate(security_level, host_cryptogram):
 
     elif security_info['secureChannelProtocol'] == GP_SCP02:
 
-        mac = calculate_mac_SCP02(externalAuthAPDU, security_info['C_MACSessionKey'], crypto.ICV_NULL_8)
+        mac = calculate_mac_SCP02(externalAuthAPDU, security_info['C_MACSessionKey'], 'ISO_9797_M2', crypto.ICV_NULL_8)
         security_info['lastC_MAC'] = mac
         # add the mac to the command
         externalAuthAPDU = externalAuthAPDU + mac
