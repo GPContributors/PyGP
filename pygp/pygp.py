@@ -1226,19 +1226,22 @@ def extradite(security_domain_AID, application_aid, identification_number = None
         raise
 
 
-def install_load(load_file_path, security_domain_aid ):
+def install_load(load_file_path, security_domain_aid, load_file_data_block_hash = None, load_parameters = None, load_token = None):
     '''
         Performs an install for load of a load file into a Security Domain.
 
         :param str load_file_path: The path of the load file to install.
         :param str security_domain_aid: The AID of the Security domain.
+        :param str load_file_data_block_hash: Mandatory if a Load Token is present or if the Load File contains one or more DAP Blocks.
+        :param str load_parameters: The load file parameter (under tag EF, None by default).
+        :param str load_token: The load token (None by default).
 
     '''
     try:
         # Verify the load File
         load_file_obj = loadfile.Loadfile(load_file_path)
 
-        error_status = gp.install_load(load_file_obj.get_aid(), security_domain_aid)
+        error_status = gp.install_load(load_file_obj.get_aid(), security_domain_aid, load_file_data_block_hash, load_parameters, load_token)
 
         __handle_error_status__(error_status, "install_load: ")
 
