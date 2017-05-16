@@ -475,7 +475,7 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             return error_status, None
 
     if apdu_timing == True:
-        log_info("command time: %3f ms" %(end_time - start_time))
+        log_info("execution time: %.3f sec." %(end_time - start_time))
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
