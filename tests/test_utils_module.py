@@ -39,6 +39,42 @@ class Test_Utils_Module(unittest.TestCase):
         bytestring = lv(astr)
         self.assertEqual(bytestring, "093B6500009C11010103") 
 
+    def test_ber_lv(self):
+        ''' Test the ber_lv function'''
+        astr = ""
+        bytestring = ber_lv(astr)
+        self.assertEqual(bytestring, "00")
+
+        astr = ""
+        for i in range(0, 128):
+            astr = astr + "01"
+        bytestring = ber_lv(astr)
+        self.assertEqual(bytestring, "8180" + astr)
+
+        astr = ""
+        for i in range(0, 300):
+            astr = astr + "01"
+        bytestring = ber_lv(astr)
+        self.assertEqual(bytestring, "82012C" + astr)
+        astr = "3B65000  09C11 0101 03"
+        bytestring = ber_lv(astr)
+        self.assertEqual(bytestring, "093B6500009C11010103") 
+
+
+    def test_der_lv(self):
+        ''' Test the der_lv function'''
+        astr = ""
+        bytestring = der_lv(astr)
+        self.assertEqual(bytestring, "00")
+        for i in range(0, 300):
+            astr = astr + "01"
+        bytestring = der_lv(astr)
+        self.assertEqual(bytestring, "FF012C" + astr)
+        astr = "3B65000  09C11 0101 03"
+        bytestring = der_lv(astr)
+        self.assertEqual(bytestring, "093B6500009C11010103") 
+
+
     def test_getLength(self):
         ''' Test the getLength function'''
         bytestring = getLength("A0A40002", 2)
