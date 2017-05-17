@@ -304,8 +304,7 @@ def calculate_mac_SCP02(data, key, iv):
     :returns: (str): The calculated MAC
     '''
     # padd data if needed
-    data = crypto.ISO_9797_M2_Padding(data, 8)
-    return crypto.MAC3(data, key, iv)
+    return crypto.MAC3(data, key, 'ISO_9797_M2', iv)
 
 
 def calculate_mac_SCP03(data, key, iv):
