@@ -14,6 +14,7 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import utils as asymmetric_utils
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography import utils
@@ -843,6 +844,29 @@ def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
 
     return private_key, public_key
 
+
+def build_RSA_public_keys(public_modulus, public_exponent):
+    ''' 
+        Build RSA public keys using specific values
+
+        :param str public_modulus: the public key modulus.
+        
+        :param str public_exponent: the public key exponent.
+
+        :returns data_ret: the public key objects
+ 
+    '''
+    import re
+    # remove space if any
+    public_modulus = ''.join( re.split( '\W+', public_modulus.upper() ) )
+    public_exponent = ''.join( re.split( '\W+', public_exponent.upper() ) )
+
+    public_key = RSA_public_key(public_modulus, public_exponent)
+    public_key.build()
+
+    return public_key
+
+
 def RSA_signature(message, private_key, padding_algorithm = 'PKCS1', hash_algorithm = 'SHA1'):
     ''' 
         Performs a RSA signature on data using the padding and hash algorithm.
@@ -1163,8 +1187,8 @@ def generate_EC_keys( curve_name = 'brainpoolP256r1'  ):
 
     # get the private key implementation values in order to create our own private key class
     private_numbers = private_key.private_numbers()
-
-    privateKey = EC_private_key(private_numbers.private_value, curve, private_key)
+    p = hex(private_numbers.private_value).lstrip("0x").upper()
+    privateKey = EC_private_key(p, curve, private_key)
         
     return privateKey, publicKey
 
@@ -1231,6 +1255,62 @@ def build_EC_keys( s, x, y, curve_name = 'brainpoolP256r1'):
     public_key.build()
     
     return private_key, public_key
+
+
+def build_EC_public_key( x, y, curve_name = 'brainpoolP256r1'):
+    ''' 
+        Build EC public keys using parameters
+        
+        :param str x: The affine x component of the public point
+
+        :param str y: The affine y component of the public point 
+
+        :param str curve_name: the name of the curve. Possible curve names:
+
+        +-------------------+-------------------------------+
+        | Value             |  Description                  |
+        +===================+===============================+
+        | "nistP521r1"      |  NIST P-521                   |
+        +-------------------+-------------------------------+
+        | "nistP256r1"      |  NIST P-256                   |
+        +-------------------+-------------------------------+
+        | "brainpoolP192r1" |  Brainpool P-192 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP192t1" |  Brainpool P-192 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256r1" |  Brainpool P-256 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP256t1" |  Brainpool P-256 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384r1" |  Brainpool P-384 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP384t1" |  Brainpool P-384 T1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512r1" |  Brainpool P-512 R1           |
+        +-------------------+-------------------------------+
+        | "brainpoolP512t1" |  Brainpool P-512 T1           |
+        +-------------------+-------------------------------+
+
+            
+        :returns data_ret: the public key objects
+ 
+    '''
+    import re
+    # remove space if any
+    x = ''.join( re.split( '\W+', x.upper() ) )
+    y = ''.join( re.split( '\W+', y.upper() ) )
+
+    try:
+        curve = ec._CURVE_TYPES[curve_name]()
+    except KeyError:
+
+        return None,None
+
+    # build keys objects
+    public_key = EC_public_key(x, y, curve)
+    public_key.build()
+    
+    return public_key
 
 
 def generate_DSA_keys(key_size = 1024 ):
@@ -1417,13 +1497,16 @@ class RSA_public_key():
         self.public_modulus = public_modulus
         self.public_exponent = public_exponent
         self.key_implementation = key_implementation
-    
+        if key_implementation != None:
+            self.key_len = int(key_implementation.key_size / 8) # byte length of the modulus.
+        else:
+            self.key_len = 0
+
     def get_modulus(self):
-        return str(self.public_modulus)
+        return (self.public_modulus).rjust(self.key_len, '0')
 
     def get_exponent(self):
-        
-        return str(self.public_exponent)
+        return (self.public_exponent).rjust(6, '0')
     
     def verify(self, message, signature, padding = padding.PKCS1v15(), hash_algorithm = hashes.SHA1()):
         
@@ -1449,7 +1532,8 @@ class RSA_public_key():
         ''' build the RSA Public key object matching the crypto library used '''
         RSAPublic = rsa.RSAPublicNumbers(int(self.public_exponent,16), int(self.public_modulus,16))
         self.key_implementation = RSAPublic.public_key(backend=default_backend())
-        
+        self.key_len = int(self.key_implementation.key_size / 8) # byte length of the modulus.
+
     
     def __str__(self):
         str_value = "RSA Public Key:\n"
@@ -1470,19 +1554,23 @@ class RSA_private_key():
         self.key_implementation = key_implementation
         self.public_modulus = None
         self.public_exponent = None
-    
+        if key_implementation != None:
+            self.key_len = int(key_implementation.key_size / 8) # byte length of the modulus.
+        else:
+            self.key_len = 0
+
     def get_p(self):
-        return str(self.p)
+        return (self.p).rjust(self.key_len, '0')
     def get_q(self):
-        return str(self.q)
+        return (self.q).rjust(self.key_len, '0')
     def get_d(self):
-        return str(self.d)
+        return (self.d).rjust(self.key_len * 2, '0')
     def get_dmp1(self):
-        return str(self.dmp1)
+        return (self.dmp1).rjust(self.key_len, '0')
     def get_dmq1(self):
-        return str(self.dmq1)
+        return (self.dmq1).rjust(self.key_len, '0')
     def get_iqmp(self):
-        return str(self.iqmp)
+        return (self.iqmp).rjust(self.key_len, '0')
     
     def set_public_key(self, modulus, exponent):
         self.public_modulus = modulus
@@ -1492,7 +1580,7 @@ class RSA_private_key():
     def sign(self, message, padding = padding.PKCS1v15(), hash_algorithm = hashes.SHA1()):
         message_bytes  = bytes.fromhex(message)
         signature = self.key_implementation.sign(message_bytes,padding, hash_algorithm)
-        return signature.hex().upper()
+        return signature.hex().upper().rjust(self.key_len * 2, '0')
     
     def decrypt(self, message, padding = padding.PKCS1v15()):
         message_bytes  = bytes.fromhex(message)
@@ -1505,7 +1593,8 @@ class RSA_private_key():
         RSAPublic = rsa.RSAPublicNumbers(int(self.public_exponent,16), int(self.public_modulus,16))
         RSA_private_numbers = rsa.RSAPrivateNumbers(int(self.p, 16), int(self.q, 16), int(self.d, 16), int(self.dmp1, 16), int(self.dmq1, 16), int(self.iqmp, 16) ,RSAPublic)
         self.key_implementation = RSA_private_numbers.private_key(backend=default_backend())
-    
+        self.key_len = int(self.key_implementation.key_size / 8) # byte length of the modulus. It will be set 
+
     def __str__(self):
         str_value = "RSA Private Key:\n"
         str_value = str_value  + "\t p  : " + self.get_p()+ "\n"
@@ -1604,24 +1693,28 @@ class EC_public_key():
         self.x = x
         self.y = y
         self.curve = curve
+        self.key_len = int(curve.key_size / 8) # Size (in bytes) of a secret scalar for the curve
         self.key_implementation = key_implementation
     
     def get_x(self):
-        return str(self.x)
+        return (self.x).rjust(self.key_len * 2, '0')
     def get_y(self):
-        return str(self.y)
+        return (self.y).rjust(self.key_len * 2, '0')
     def get_curve(self):
-        return str(self.curve)
+        return self.curve
     def get_curve_name(self):
-        return str(self.curve.name)
+        return self.curve.name
     
     def verify(self, message, signature, hash_algorithm = hashes.SHA1()):
         
         if self.key_implementation != None:
             message_bytes  = bytes.fromhex(message)
-            signature_bytes  = bytes.fromhex(signature)
+            signature_centerposition = int(len(signature) / 2)
+            signature_x = int(signature[:signature_centerposition], 16)
+            signature_y = int(signature[signature_centerposition:], 16)
+            signature_dss_encoded = asymmetric_utils.encode_dss_signature(signature_x, signature_y)
             try:
-                self.key_implementation.verify(signature_bytes,message_bytes, ec.ECDSA(hash_algorithm))
+                self.key_implementation.verify(signature_dss_encoded, message_bytes, ec.ECDSA(hash_algorithm))
             except:
                 return False
             return True
@@ -1648,18 +1741,19 @@ class EC_private_key():
     def __init__(self, p, curve, key_implementation = None):
         self.p = p
         self.curve = curve
+        self.key_len = int(curve.key_size / 8) # Size (in bytes) of a secret scalar for the curve
         self.key_implementation = key_implementation
         self.x = None
         self.y = None
     
     def get_p(self):
-        return str(self.p)
+        return (self.p).rjust(self.key_len * 2, '0')
 
     def get_curve(self):
-        return str(self.curve)
+        return self.curve
     
     def get_curve_name(self):
-        return str(self.curve.name)
+        return self.curve.name
 
     def set_public_key(self, x, y):
         self.x = x
@@ -1674,8 +1768,12 @@ class EC_private_key():
     
     def sign(self, message, hash_algorithm = hashes.SHA1()):
             message_bytes  = bytes.fromhex(message)
-            signature = self.key_implementation.sign(message_bytes,ec.ECDSA(hash_algorithm))
-            return signature.hex().upper()
+            signature = self.key_implementation.sign(message_bytes, ec.ECDSA(hash_algorithm))
+            r, s = asymmetric_utils.decode_dss_signature(signature)
+            str_r = format(r, 'X').rjust(self.key_len * 2,'0')
+            str_s = format(s, 'X').rjust(self.key_len * 2,'0')
+            return str_r + str_s
+
 
     def exchange(self, public_key):
         

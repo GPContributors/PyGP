@@ -156,6 +156,79 @@ def lv(bytestring):
         return intToHexString(length,1) + bytestr
 
 
+def ber_lv(bytestring):
+    '''
+        Returns a byte String representing the BER type length content preceding by its length.
+
+        :param str bytestring: a hexadecimal string
+
+        :returns: str bytestr: the hexadecimal string preceded by its length 
+        
+        .. note:: short form consist of a single octec in which bit 8 is 0. (length: range is 0 ~ 127)
+                  long form. Initial octet, bit 8 is 1, and bits 1-7 encode the number of octets that follow.
+
+        ::
+            # get the string preceded by its length
+            astr = "3B65000  09C11 0101 03"
+            lv(astr) # returns  "093B6500009C11010103"
+        
+            # the length of astr is longer than 127. Assume that length is 0x80
+            astr = "3B65000  09C11 0101 03..... 00"
+            lv(astr) # returns  "81803B6500009C11010103....00"
+
+    '''
+    import re
+    bytestr = ''.join( re.split( '\W+', bytestring.upper() ) )
+
+    length = int(len(bytestr)/2)
+    if (length > 0x7FFF):
+        #length on 4 bytes
+        return '83' + intToHexString(length,3) + bytestr
+    elif (length > 0xFF):
+        #length on 3 bytes
+        return '82' + intToHexString(length,2) + bytestr
+    elif (length > 0x7F):
+        #length on 2 bytes
+        return '81' + intToHexString(length,1) + bytestr
+    else:
+        return intToHexString(length,1) + bytestr
+
+
+
+def der_lv(bytestring):
+    '''
+        Returns a byte String representing the length content preceding by its length.
+
+        :param str bytestring: a hexadecimal string
+
+        :returns: str bytestr: the hexadecimal string preceded by its length 
+        
+        .. note:: short form consist of a single octec (length: range is 0 ~ 127)
+                  long from consist of three octec, start with 0xFF(length: rnage is 0x0100 ~ 0xFFFF)
+
+        ::
+
+            # get the string preceded by its length
+            astr = "3B65000  09C11 0101 03"
+            lv(astr) # returns  "093B6500009C11010103"
+
+            # the length of astr is longer than 255. Assume that length is 0x0100
+            astr = "3B65000  09C11 0101 03..... 00"
+            lv(astr) # returns  "FF01003B6500009C11010103....00"
+
+    '''
+    import re
+    bytestr = ''.join( re.split( '\W+', bytestring.upper() ) )
+
+    length = int(len(bytestr)/2)
+    if (length > 0xFF):
+        #length on 2 bytes
+        return 'FF' + intToHexString(length,2) + bytestr
+    else:
+        return intToHexString(length,1) + bytestr
+
+
+
 def intToHexString(intValue, len = 1):
     """
         Returns a hexadecimal string representing an integer

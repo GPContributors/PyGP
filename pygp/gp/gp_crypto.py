@@ -293,20 +293,19 @@ def encipher_iv_SCP03(data, key):
     '''
     return crypto.AES_CBC(data, key)
 
-def calculate_mac_SCP02(data, key, padding, iv):
+def calculate_mac_SCP02(data, key, iv):
     '''
     Computes a message authentication code according to SCP02 protocol.
     
     :param str data : The message to authenticate.
     :param str key : A 3DES key used to sign 
-    :param str padding : Padding algorithm to use
     :param str iv : The initial chaining vector
 
     :returns: (str): The calculated MAC
     '''
     # padd data if needed
-    return crypto.MAC3(data, key, padding, iv)
 
+    return crypto.MAC3(data, key, 'ISO_9797_M2', iv)
 
 def calculate_mac_SCP03(data, key, iv):
     '''
