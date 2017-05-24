@@ -7,6 +7,8 @@ Utility functions
 .. autofunction:: pygp.utils.increment
 .. autofunction:: pygp.utils.intToHexString
 .. autofunction:: pygp.utils.lv
+.. autofunction:: pygp.utils.ber_lv
+.. autofunction:: pygp.utils.der_lv
 .. autofunction:: pygp.utils.remove_space
 .. autofunction:: pygp.utils.toByteArray
 .. autofunction:: pygp.utils.toHexString
