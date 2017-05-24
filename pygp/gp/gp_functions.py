@@ -293,7 +293,7 @@ def wrap_command(security_info, capdu):
             
     # MAC calculation
     if security_info['secureChannelProtocol'] == GP_SCP02:
-        mac = calculate_mac_SCP02(toHexString(apdu_to_wrap), security_info['C_MACSessionKey'], iv)
+        mac = calculate_mac_SCP02(toHexString(apdu_to_wrap), security_info['C_MACSessionKey'], 'ISO_9797_M2', iv)
         # re put lc with the length of the encipher data
         apdu_to_wrap[4] = len(encData) + 8# enc data 
     elif(security_info['secureChannelProtocol']== GP_SCP03):
@@ -475,7 +475,7 @@ def send_APDU(capdu, raw_mode = False, exsw = None, exdata = None):
             return error_status, None
 
     if apdu_timing == True:
-        log_info("command time: %3f ms" %(end_time - start_time))
+        log_info("execution time: %.3f sec." %(end_time - start_time))
     # update global variables
     last_apdu_response = c_unwrapped_rapdu[:-4] # response without status
     last_apdu_status   = c_unwrapped_rapdu[-4:] # only  status
@@ -1362,7 +1362,7 @@ def external_authenticate(security_level, host_cryptogram):
 
     elif security_info['secureChannelProtocol'] == GP_SCP02:
 
-        mac = calculate_mac_SCP02(externalAuthAPDU, security_info['C_MACSessionKey'], crypto.ICV_NULL_8)
+        mac = calculate_mac_SCP02(externalAuthAPDU, security_info['C_MACSessionKey'], 'ISO_9797_M2', crypto.ICV_NULL_8)
         security_info['lastC_MAC'] = mac
         # add the mac to the command
         externalAuthAPDU = externalAuthAPDU + mac
