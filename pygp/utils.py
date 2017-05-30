@@ -251,6 +251,29 @@ def intToHexString(intValue, len = 1):
     stringValue = stringValue.rjust(len*2,'0')
     return stringValue.upper()
 
+def ToASCIIString(string):
+    """
+        Returns the ASCII representation string from input string
+        
+        :param list str: a string
+
+        :returns: str: the ASCII hexadecimal string 
+
+        ::
+
+            # get the hex string from the string
+            string = '0123456789'
+            ToASCIIString( string ) # returns  "30313233343536373839"
+        
+    """
+    value = ""
+    if len(string) == 0:
+        return None
+
+    for i in string:
+        value += ("%-0.2X" % ord(i))
+    return value
+
 
 def getLength(bytestr, length = 1):
     '''
