@@ -251,19 +251,19 @@ def intToHexString(intValue, len = 1):
     stringValue = stringValue.rjust(len*2,'0')
     return stringValue.upper()
 
-def strToHexString(string):
+def ToASCIIString(string):
     """
-        Returns a hexadecimal string from input string
+        Returns the ASCII representation string from input string
         
         :param list str: a string
 
-        :returns: str: the hexadecimal string 
+        :returns: str: the ASCII hexadecimal string 
 
         ::
 
             # get the hex string from the string
             string = '0123456789'
-            strToHexString( string ) # returns  "30313233343536373839"
+            ToASCIIString( string ) # returns  "30313233343536373839"
         
     """
     value = ""
