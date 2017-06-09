@@ -236,7 +236,21 @@ class Test_AES(unittest.TestCase):
         isOK = RSA_verify(Message, signature, public)
         self.assertEqual(isOK, True)
     
+
     def test_RSA_3(self):
+            Message = "0001FFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            
+            private_exponent = '8b5c3649023b7aaafca5505af785db2549af0a2de4e3ee1645bc5c719a558c60f0599d26531b47183288f584e2140048e273de9dfde2aae8470f185bddfb45f675ea7965e194fa9b8c48baf0fa8606a218adfa2d0850fa35d2af3ab943bf893589028b557f62250b72ac0c86c5d2bc3c3a4046280b262925ea990b41a80449ea3dbd6a01845b982abe2040bb40d15ac4c2eb5f06e62622ce0b4d44c2d7fe852ce503753666eb9406caa305f6de97d698bf55975d3d871489b4086bf83ee26dbaa217497e774286d8df3e86398b0c67405983e6a24f1e6d19d962f02d0f5ac542d9d8d9f66dbd103a4b35de2fd2983c73b611a333f39c365d332814312519f04b'	
+            modulus = 'd10a516d835938007af7f8887348c8b7ee868f44d755e521689a8aaa6780529168866bb97ca8eaa44bcd7047531e006d53adcdecfcd4005c6a96a489ccf8e8f1b0dfb618d25f77e9526d186977c909f32504f7438c797750bc06d815e59f4dd04d83d1003f1337912c0212ca28bc1a5a5760693c10b93db8dfe590e27c066ee12be911db2b6d87b3d637caa06bc1012cf8fc293db3cbbf77ccca7821e30ebdbf57a1890a3027f6b84e81243d3ad7741a112e666ee40acf506ed466b4eeb7d2aa2fdaf01d285e76d2f5d5799a570b0bd7d899ddb9abf16fb98495991aa851d51d4ab86cd5da69a8e44ca74052f11423a5944b6a9ae1b775c43ee99406eeacad7b'
+            exponent = '03'
+
+            private, public = build_RSA_SFM_keys(modulus, exponent,private_exponent)
+ 
+            signature = RSA_signature(Message, private)
+            isOK = RSA_verify(Message, signature, public)
+            self.assertEqual(isOK, True)
+
+    def test_RSA_4(self):
          p = "E5062379A000F943962BB89D6347257B05813A03D5E7076F27A74908EFFAF20E7EAC5E7EB8E6848F4AD309D5D76AA357476465BA4FF2EBEE93885432BAE83BB83F913B142C759FC7E5328151C399BF90DFFBE77F12F0DB01F23A84189A99B4E1AF76485910247AAC673EFAD73729DD2D7B5A67E44FA49915A54FEC282A363E6B"
          private, public = generate_RSA_keys('03', 2048)   
          input = p

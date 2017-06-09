@@ -805,6 +805,56 @@ def generate_RSA_keys(exponent, key_size = 1024 ):
     
     return privateKey, publicKey
 
+def build_RSA_SFM_keys(public_modulus, public_exponent, private_exponent):
+    ''' 
+        Build RSA keys using specific values
+
+        :param str public_modulus: the public key modulus.
+        
+        :param str public_exponent: the public key exponent.
+
+        :param str private_exponent: The private key exponent 
+        
+        :returns tuple data_ret: the private and public key objects
+ 
+    '''
+    import re
+    # remove space if any
+    public_modulus = ''.join( re.split( '\W+', public_modulus.upper() ) )
+    public_exponent = ''.join( re.split( '\W+', public_exponent.upper() ) )
+    private_exponent = ''.join( re.split( '\W+', private_exponent.upper() ) )
+
+    # Computes the prime factors (p, q) given the modulus, public exponent, and private exponent
+    public_modulus_as_int = int(public_modulus,16)
+    public_exponent_as_int = int(public_exponent,16)
+    d = int(private_exponent,16)
+    
+    p, q = rsa.rsa_recover_prime_factors(public_modulus_as_int, public_exponent_as_int, d)
+    # Computes the dmp1 parameter from the RSA private exponent (d) and prime p.
+    dmp1 = rsa.rsa_crt_dmp1(d, p)
+    # Computes the iqmp (also known as qInv) parameter from the RSA primes p and q.
+    iqmp = rsa.rsa_crt_iqmp(p, q)
+    # Computes the dmq1 parameter from the RSA private exponent (d) and prime q.
+    dmq1 = rsa.rsa_crt_dmq1(d, q)
+
+    # wrap parameter to string in order to be compliant with class memebers
+
+
+    p = hex(p).lstrip("0x")
+    q = hex(q).lstrip("0x")
+    d = hex(d).lstrip("0x")
+    dmq1 = hex(dmq1).lstrip("0x")
+    iqmp = hex(iqmp).lstrip("0x")
+    dmp1 = hex(dmp1).lstrip("0x")
+
+    private_key = RSA_private_key(p, q, d, dmp1, dmq1, iqmp)
+    private_key.set_public_key(public_modulus, public_exponent)
+    private_key.build()
+    
+    public_key = RSA_public_key(public_modulus, public_exponent)
+    public_key.build()
+
+    return private_key, public_key
 
 def build_RSA_keys(public_modulus, public_exponent, p, q, d, dmp1, dmq1, iqmp):
     ''' 
