@@ -1312,7 +1312,7 @@ def registry_update(security_domain_AID, application_aid, application_privileges
         raise
 
 
-def load_file(load_file_path, block_size = 32 ):
+def load_file(load_file_path, block_size = 230 ):
     '''
         Performs a set of load commands using the load file parameter.
 
@@ -1504,7 +1504,7 @@ def upload_install(load_file_path, security_domain_aid, executable_module_aid, a
 
         __handle_error_status__(error_status, "upload_install: ")
 
-        error_status = gp.load_blocks(load_file_path, block_size = 192)
+        error_status = gp.load_blocks(load_file_path, block_size = 230)
 
         __handle_error_status__(error_status, "upload_install: ")
 
@@ -1532,7 +1532,7 @@ def upload(load_file_path, security_domain_aid ):
 
         __handle_error_status__(error_status, "upload: ")
 
-        error_status = gp.load_blocks(load_file_path, block_size = 32)
+        error_status = gp.load_blocks(load_file_path, block_size = 230)
 
         __handle_error_status__(error_status, "upload: ")
 
