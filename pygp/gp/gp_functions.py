@@ -896,37 +896,14 @@ def get_status(card_element):
                 return error_status, None
             
             card_response = card_response + last_response()
-        
-        # we have the card_response TLV. create the get status response dictionnary
-        response_tlvs = TLVs(toByteArray(card_response))
-        app_info_list = []
-        app_aid = None
-        app_lifecycle = None
-        app_privileges = None
-        app_modules_aid = None
-
-        for response_tlv in response_tlvs.list_childs_tlv():
-            if response_tlv.getTAG() == 'E3':
-                # manage the list of TLV into this response_tlv
-                app_info_tlv_list = response_tlv.list_childs_tlv() 
-                for app_info in app_info_tlv_list:
-                    if app_info.getTAG() == '4F':
-                        app_aid = app_info.getValue()
-                    elif app_info.getTAG() == '9F70':
-                            app_lifecycle = app_info.getValue()
-                    elif app_info.getTAG() == 'C5':
-                            app_privileges = app_info.getValue()
-                    elif app_info.getTAG() == '84':
-                            app_modules_aid = app_info.getValue()
-                app_info_list.append({'aid':app_aid, 'lifecycle':app_lifecycle[:2], 'privileges':app_privileges, 'module_aid':app_modules_aid})
     else:
-        app_info_list = None
+        card_response = None
         error_status = create_no_error_status(0x00)
 
     
     log_end("get_status", error_status['errorStatus'])
 
-    return error_status, app_info_list
+    return error_status, card_response
 
 
 

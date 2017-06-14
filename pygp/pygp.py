@@ -29,7 +29,6 @@ readername   = None
 key_list    = []
 
 
-
 def __handle_error_status__(error_status, function_name = ''):
     global must_stop_on_error
     
@@ -740,17 +739,19 @@ def get_status_isd():
         Get the AID, the life cycle state and the privileges of the Issuer Security Domain and log it through the logger.
     
     """
-
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('80' )
+        error_status, card_response =  gp.get_status('80' )
 
         __handle_error_status__(error_status, "get_status_isd: ")
 
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Card Manager AID : %s (%s) (%s)\n" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-            
+        if card_response != None:
+            status_dic = tlv_read(card_response)['E3']
+            logger.log_info("Card Manager AID : %s {%s} (%s) (%s)\n" % \
+                             (status_dic['4F'].upper(), \
+                             aid_dict.get(status_dic['4F'].upper(), ''), \
+                             SD_LifeCycleState[status_dic['9F70'][:2]], \
+                             gp_utils.bytesToPrivileges(status_dic['C5'])))
 
     except BaseException as e:
         logger.log_error(str(e))
@@ -764,14 +765,18 @@ def get_status_applications():
     """
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('40' )
+        error_status, card_response =  gp.get_status('40' )
 
         __handle_error_status__(error_status, "get_status_applications: ")
 
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-    
+        if card_response != None:
+            status_dic = tlv_read(card_response)['E3']
+            for status_app in status_dic:
+                aid_name = aid_dict.get(status_app['4F'].upper(), '')
+                logger.log_info("Application AID : %s {%s} (%s) (%s)" % \
+                                (status_app['4F'].upper(), aid_name, \
+                                Application_LifeCycleState[status_app['9F70'][:2]], \
+                                gp_utils.bytesToPrivileges(status_app['C5']) ))
     except BaseException as e:
         logger.log_error(str(e))
         raise
@@ -784,14 +789,17 @@ def get_status_executable_load_files():
     """
     try:
         # 1. perform the command 
-        error_status, app_info_list =  gp.get_status('20' )
+        error_status, card_response =  gp.get_status('20' )
 
         __handle_error_status__(error_status, "get_status_executable_load_file: ")
 
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-
+        if card_response != None:      
+            status_dic = tlv_read(card_response)['E3']
+            for status_elf in status_dic:
+                aid_name = aid_dict.get(status_elf['4F'].upper(), '')
+                logger.log_info("Load file AID : %s {%s} (%s)" % \
+                                (status_elf['4F'].upper(), aid_name, \
+                                ExecutableLoadFile_LifeCycleState[status_elf['9F70'][:2]]))
     except BaseException as e:
         logger.log_error(str(e))
         raise
@@ -804,15 +812,25 @@ def get_status_executable_load_files_and_modules():
     """
     try:
         # 1. perform the install command 
-        error_status, app_info_list =  gp.get_status('10' )
+        error_status, card_response =  gp.get_status('10' )
 
         __handle_error_status__(error_status, "get_status_executable_load_files_and_modules: ")
-        if app_info_list != None:
-            for app_info in app_info_list:
-                logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                if app_info['module_aid'] != None:
-                    logger.log_info("\tModule AID : %s " % (app_info['module_aid'].upper()))
-
+        if card_response != None:      
+            status_dic = tlv_read(card_response)['E3']
+            for status_elf in status_dic:
+                aid_name = aid_dict.get(status_elf['4F'].upper(), '')
+                logger.log_info("Load file AID : %s {%s} (%s)" % \
+                                (status_elf['4F'].upper(), aid_name, \
+                                ExecutableLoadFile_LifeCycleState[status_elf['9F70'][:2]]))
+                if '84' in status_elf:
+                    if type(status_elf['84']) == list:
+                        for aid in status_elf['84']:
+                            logger.log_info("\tModule AID : %s {%s}" % \
+                                            (aid.upper(), aid_dict.get(aid.upper(), '')))    
+                    elif type(status_elf['84']) == str:
+                        logger.log_info("\tModule AID : %s {%s}" % \
+                                        (status_elf['84'].upper(), \
+                                        aid_dict.get(status_elf['84'].upper(), '')))
     except BaseException as e:
         logger.log_error(str(e))
         raise
@@ -825,36 +843,46 @@ def ls():
     """
     try:
         # 1. perform the command
-        error_status, isd_info_list =  gp.get_status('80' )
+        error_status, isd_info =  gp.get_status('80' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, app_info_list =  gp.get_status('40' )
+        error_status, app_info =  gp.get_status('40' )
         __handle_error_status__(error_status, "ls: ")
-        error_status, exefile_info_list =  gp.get_status('10' )
+        error_status, exefile_info =  gp.get_status('10' )
         __handle_error_status__(error_status, "ls: ")
 
-        if isd_info_list != None:
-            for app_info in isd_info_list:
-                aid_name = aid_dict.get(app_info['aid'].upper())
-                if aid_name != None:
-                    logger.log_info("Card Manager AID : %s {%s} (%s) (%s)" % (app_info['aid'].upper(), aid_name, SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-                else:
-                    logger.log_info("Card Manager AID : %s (%s) (%s)" % (app_info['aid'].upper(), SD_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if app_info_list != None:
-            for app_info in app_info_list:
-                aid_name = aid_dict.get(app_info['aid'].upper())
-                if aid_name != None:
-                    logger.log_info("Application AID : %s {%s} (%s) (%s)" % (app_info['aid'].upper(), aid_name, Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-                else:
-                    logger.log_info("Application AID : %s (%s) (%s)" % (app_info['aid'].upper(), Application_LifeCycleState[app_info['lifecycle']], gp_utils.bytesToPrivileges(app_info['privileges']) ))
-        if exefile_info_list != None:        
-            for app_info in exefile_info_list:
-                aid_name = aid_dict.get(app_info['aid'].upper())
-                if aid_name != None:
-                    logger.log_info("Load file AID : %s {%s} (%s)" % (app_info['aid'].upper(), aid_name, ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                else:
-                    logger.log_info("Load file AID : %s (%s)" % (app_info['aid'].upper(), ExecutableLoadFile_LifeCycleState[app_info['lifecycle']]))
-                if app_info['module_aid'] != None:
-                    logger.log_info("\tModule AID : %s" % (app_info['module_aid'].upper()))
+        if isd_info != None:
+            status_dic = tlv_read(isd_info)['E3']
+            logger.log_info("Card Manager AID : %s {%s} (%s) (%s)\n" % \
+                             (status_dic['4F'].upper(), \
+                             aid_dict.get(status_dic['4F'].upper(), ''), \
+                             SD_LifeCycleState[status_dic['9F70'][:2]], \
+                             gp_utils.bytesToPrivileges(status_dic['C5'])))
+
+        if app_info != None:
+            status_dic = tlv_read(app_info)['E3']
+            for status_app in status_dic:
+                aid_name = aid_dict.get(status_app['4F'].upper(), '')
+                logger.log_info("Application AID : %s {%s} (%s) (%s)" % \
+                                (status_app['4F'].upper(), aid_name, \
+                                Application_LifeCycleState[status_app['9F70'][:2]], \
+                                gp_utils.bytesToPrivileges(status_app['C5']) ))
+
+        if exefile_info != None:      
+            status_dic = tlv_read(exefile_info)['E3']
+            for status_elf in status_dic:
+                aid_name = aid_dict.get(status_elf['4F'].upper(), '')
+                logger.log_info("Load file AID : %s {%s} (%s)" % \
+                                (status_elf['4F'].upper(), aid_name, \
+                                ExecutableLoadFile_LifeCycleState[status_elf['9F70'][:2]]))
+                if '84' in status_elf:
+                    if type(status_elf['84']) == list:
+                        for aid in status_elf['84']:
+                            logger.log_info("\tModule AID : %s {%s}" % \
+                                            (aid.upper(), aid_dict.get(aid.upper(), '')))    
+                    elif type(status_elf['84']) == str:
+                        logger.log_info("\tModule AID : %s {%s}" % \
+                                        (status_elf['84'].upper(), \
+                                        aid_dict.get(status_elf['84'].upper(), '')))
     
     except BaseException as e:
         logger.log_error(str(e))
