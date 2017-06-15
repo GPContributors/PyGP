@@ -401,11 +401,14 @@ def close():
                 error_status['errorMessage'] = "A APDU command can't be recognized as a valid T=0 protocol Case 1-4 ISO7816-4 APDU"
             }
     '''
+
+    # do cold reset first
+    reset_card(SCARD_UNPOWER_CARD)
+
     try:
         gp.clear_securityInfo()
-        # first establish context
-        error_status = conn.release_context()
-        
+        # release context
+        error_status = conn.release_context()        
         __handle_error_status__(error_status)
         
         return error_status
@@ -496,6 +499,29 @@ def atr():
 
         return atr
 
+    except BaseException as e:
+        logger.log_error(str(e))
+        raise
+
+
+def reset_card(disposition):
+    """
+        terminates a connection.
+        :param int disposition: The parameter to determine warm(0x01) or cold(0x02) reset.
+    """
+    try:
+        global readername
+
+        # perform a card disconnect
+        error_status = conn.card_disconnect(disposition)
+        __handle_error_status__(error_status)
+
+        if disposition == SCARD_RESET_CARD:
+            logger.log_error("Connection Closed (Warm reset)")
+        elif disposition == SCARD_UNPOWER_CARD:
+            logger.log_error("Connection Closed (Cold reset)")
+        
+        return error_status
     except BaseException as e:
         logger.log_error(str(e))
         raise
