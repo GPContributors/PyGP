@@ -186,7 +186,7 @@ def send_apdu(bytelist_capdu):
                         capdu_Le = len(bytelist_rapdu)
                     
                     if capdu_Le == 0x00:
-                        capdu_Le = 256
+                        capdu_Le = 255
                     bytelist_capdu[4] = bytelist_rapdu[1]
                     #resend the command
                     log_management_apdu(TO_CARD,bytelist_capdu)
