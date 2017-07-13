@@ -200,7 +200,8 @@ def send_apdu(bytelist_capdu):
 
                     
                     # manage card response
-                    if len(bytelist_rapdu) < capdu_Le:
+                    # We have to check the length of data (ie without status)
+                    if (len(bytelist_rapdu) - 2) < capdu_Le:
                         # return all the card response
                         return error_status, toHexString(bytelist_rapdu)
                     else:

@@ -107,88 +107,87 @@ LIFE_CYCLE_SECURITY_DOMAIN_PERSONALIZED = 'FF'   #!< Application is personalized
 LIFE_CYCLE_SECURITY_DOMAIN_LOCKED       = 'FF'   #!< Application is locked.
 
 
+# disposition parameter to terminate PCSC connection
+SCARD_LEAVE_CARD    = 0x00
+SCARD_RESET_CARD    = 0x01
+SCARD_UNPOWER_CARD  = 0x02
+
+
 # Secure Channel Protocol '02': "i" = '44': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, no ICV encryption, 1 Secure Channel base key,
 # well-known pseudo-random algorithm (card challenge),
-
 SCP02_IMPL_i44  = '44'
+
 # Secure Channel Protocol '02': "i" = '45': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, no ICV encryption, 3 Secure Channel Keys,
 # well-known pseudo-random algorithm (card challenge),
-
-
 SCP02_IMPL_i45  = '45'
+
 # Secure Channel Protocol '02': "i" = '54': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, ICV encryption for C-MAC session, 1 Secure Channel base key,
 # well-known pseudo-random algorithm (card challenge),
-
 SCP02_IMPL_i54  = '54'
+
 # Secure Channel Protocol '02': "i" = '55': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, ICV encryption for C-MAC session, 3 Secure Channel Keys,
 # well-known pseudo-random algorithm (card challenge).
-
 SCP02_IMPL_i55  = '55'
+
 # Secure Channel Protocol '02': "i" '04': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, no ICV encryption, 1 Secure Channel base key, unspecified card challenge generation method
-
 SCP02_IMPL_i04  = '04'
+
 # Secure Channel Protocol '02': "i" '05': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, no ICV encryption, 3 Secure Channel Keys, unspecified card challenge generation method
-
 SCP02_IMPL_i05  = '05'
+
 # Secure Channel Protocol '02': "i" '0A': Initiation mode implicit, C-MAC on unmodified APDU,
 # ICV set to MAC over AID, no ICV encryption, 1 Secure Channel base key
-
 SCP02_IMPL_i0A  = '0A'
+
 # Secure Channel Protocol '02': "i" '0B': Initiation mode implicit, C-MAC on unmodified APDU,
 # ICV set to MAC over AID, no ICV encryption, 3 Secure Channel Keys
-
 SCP02_IMPL_i0B  = '0B'
+
 # Secure Channel Protocol '02': "i" '14': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, ICV encryption for CMAC session, 1 Secure Channel base key,
 # unspecified card challenge generation method
-
 SCP02_IMPL_i14  = '14'
+
 # Secure Channel Protocol '02': "i" '15': Initiation mode explicit, C-MAC on modified APDU,
 # ICV set to zero, ICV encryption for CMAC session, 3 Secure Channel Keys,
 # unspecified card challenge generation method
-
 SCP02_IMPL_i15  = '15'
+
 # Secure Channel Protocol '02': "i" '1A': Initiation mode implicit, C-MAC on unmodified APDU,
 # ICV set to MAC over AID, ICV encryption for C-MAC session, 1 Secure Channel base key
-
 SCP02_IMPL_i1A  = '1A'
+
 # Secure Channel Protocol '02': "i" '1B': Initiation mode implicit, C-MAC on unmodified APDU,
 # ICV set to MAC over AID, ICV encryption for C-MAC session, 3 Secure Channel Keys
-
 SCP02_IMPL_i1B  = '1B'
 
 # Secure Channel Protocol '03': "i" '00': No R-MAC, no R-ENCRYPTION, no Pseudo-random cryptogram
-
 SCP03_IMPL_i00  = '00'
+
 # 
 # Secure Channel Protocol '03': "i" '10': Pseudo-random card challenge, no R-MAC support, no R-ENCRYPTION support.
-
 SCP03_IMPL_i10  = '10'
 
 # 
 # Secure Channel Protocol '03': "i" '30': Pseudo-random card challenge, R-MAC support, no R-ENCRYPTION support.
-
 SCP03_IMPL_i30  = '30'
 
 # 
 # Secure Channel Protocol '03': "i" '20': Random card challenge, R-MAC support, no R-ENCRYPTION support.
-
 SCP03_IMPL_i20  = '20'
 
 # 
 # Secure Channel Protocol '03': "i" '60': Random card challenge, R-MAC support, R-ENCRYPTION support.
-
 SCP03_IMPL_i60  = '60'
 
 # 
 # Secure Channel Protocol '03': "i" '70': Pseudo-random card challenge, R_MAC, support, R-ENCRYPTION support.
-
 SCP03_IMPL_i70  = '70'
 
 
