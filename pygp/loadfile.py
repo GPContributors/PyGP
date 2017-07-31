@@ -70,8 +70,10 @@ class Loadfile(object):
             return headerSize + utils.intToHexString(length)
         elif (length < 256 ):
             return headerSize + '81' + utils.intToHexString(length)
-        else:
+        elif (length < 65536):
             return  headerSize + '82' + utils.intToHexString(length, 2)
+        else:
+            return  headerSize + '83' + utils.intToHexString(length, 3)
 
     def get_raw_code(self):
         ''' Returns the raw code of the load file as string (ie. All components excluding Descriptor and Debug Component)'''
