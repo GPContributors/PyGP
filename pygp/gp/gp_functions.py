@@ -1563,6 +1563,8 @@ def load_blocks(load_file_path, block_size = 32):
             return error_status
         
         block_number = block_number + 1
+        if block_number > 255:
+            block_number = 0
     
     log_end("load_blocks", error_status['errorStatus'])
     return error_status
