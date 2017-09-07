@@ -164,18 +164,18 @@ def ber_lv(bytestring):
 
         :returns: str bytestr: the hexadecimal string preceded by its length 
         
-        .. note:: short form consist of a single octec in which bit 8 is 0. (length: range is 0 ~ 127)
+        .. note:: short form consist of a single byte in which bit 8 is 0. (length: range is 0 ~ 127)
                   long form. Initial octet, bit 8 is 1, and bits 1-7 encode the number of octets that follow.
 
         ::
             
 	    # get the string preceded by its length
             astr = "3B65000  09C11 0101 03"
-            lv(astr) # returns  "093B6500009C11010103"
+            ber_lv(astr) # returns  "093B6500009C11010103"
         
             # the length of astr is longer than 127. Assume that length is 0x80
             astr = "3B65000  09C11 0101 03..... 00"
-            lv(astr) # returns  "81803B6500009C11010103....00"
+            ber_lv(astr) # returns  "81803B6500009C11010103....00"
 
     '''
     import re
@@ -211,11 +211,11 @@ def der_lv(bytestring):
 
             # get the string preceded by its length
             astr = "3B65000  09C11 0101 03"
-            lv(astr) # returns  "093B6500009C11010103"
+            der_lv(astr) # returns  "093B6500009C11010103"
 
             # the length of astr is longer than 255. Assume that length is 0x0100
             astr = "3B65000  09C11 0101 03..... 00"
-            lv(astr) # returns  "FF01003B6500009C11010103....00"
+            der_lv(astr) # returns  "FF01003B6500009C11010103....00"
 
     '''
     import re
