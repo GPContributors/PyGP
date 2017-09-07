@@ -168,7 +168,8 @@ def ber_lv(bytestring):
                   long form. Initial octet, bit 8 is 1, and bits 1-7 encode the number of octets that follow.
 
         ::
-            # get the string preceded by its length
+            
+	    # get the string preceded by its length
             astr = "3B65000  09C11 0101 03"
             lv(astr) # returns  "093B6500009C11010103"
         
@@ -203,7 +204,7 @@ def der_lv(bytestring):
 
         :returns: str bytestr: the hexadecimal string preceded by its length 
         
-        .. note:: short form consist of a single octec (length: range is 0 ~ 127)
+        .. note:: short form consist of a single byte (length: range is 0 ~ 127)
                   long from consist of three octec, start with 0xFF(length: rnage is 0x0100 ~ 0xFFFF)
 
         ::
