@@ -363,9 +363,9 @@ def terminal(readerName = None):
             if len(list_readernames) > 0:
                 for readers in list_readernames:
                     # then perform a card connect to verify the card connection
-                    error_status = conn.card_connect(str(readers.decode()), current_protocol)
+                    error_status = conn.card_connect(readers, current_protocol)
                     if error_status['errorStatus'] == error.ERROR_STATUS_SUCCESS:
-                        readerName = readers.decode()
+                        readerName = readers
                         break
 
                 if readerName == None:

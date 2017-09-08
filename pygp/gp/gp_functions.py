@@ -29,6 +29,16 @@ def clear_securityInfo():
     global securityInfo
     securityInfo = [{'channelStatus':'ON'}, {}, {}, {}, 0]
 
+def get_securityInfo(channel = None):
+    global securityInfo
+    if channel == None:
+        return securityInfo[securityInfo[4]]
+    else:
+        if channel >= 0 and channel <=3:
+            return securityInfo[channel]
+        else:
+            pass
+
 def get_payload_list():
     global payload_list
     return payload_list
