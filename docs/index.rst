@@ -7,11 +7,8 @@ PyGP
 
 PyGP is a Python module that easy the use of Global Platform functions.
 
-* Support for xxxxxxx
-  
-* Runs on Python 3.5+.
+* Runs on Python 3.5.
 
-**License:** pygp is licensed under the xxxx/.
 
 Assorted Info
 -------------
